@@ -1,0 +1,443 @@
+{{#section "title"}}
+Quản lý Sách
+{{/section}}
+{{#section "css"}}
+<link
+   href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
+   rel="stylesheet"
+   />
+<link
+   rel="stylesheet"
+   href="https://cdn.datatables.net/1.10.23/css/jquery.dataTables.min.css"
+   />
+{{!-- Thông báo đẹp --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<style>
+   thead, td{
+      text-align: center;;
+   }
+   #tblBook input {
+      width: 100%;        
+      box-sizing: border-box;
+   }
+   .centerModal{
+    position: absolute;
+    float: left;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+   }
+</style>
+{{/section}}
+<div
+   class="container-fluid"
+   style="margin-top: 100px; background-color: white; padding: 15px"
+   >
+   <h1 style="color: black; margin-bottom:10px; text-align: center">
+      Quản Lý Sách
+   </h1>
+   <h3 style="color: black; margin-bottom:30px; text-align: center">{{BoPhan}}</h3>
+   <a class="btn btn-primary mb-4" href="/index/stocker/manager_book/add" style="font-weight: bold;">
+   <i class="fa fa-plus"></i> THÊM SÁCH MỚI
+   </a>
+   <table id="tblBook" class="display" style="width: 100%; margin-bottom: 20px">
+      <thead>
+         <tr>
+            <th>
+               Mã Sách
+            </th>
+            <th style="min-width: 170px;">
+               Tên Sách
+            </th>
+            <th>
+               Ngày Xuất Bản
+            </th>
+            <th>
+               Tác Giả
+            </th>
+            <th>
+               Nhân Viên Nhập Sách
+            </th>
+            <th>
+               Số Lượng
+            </th>
+            <th>
+               Số lượng đã mượn
+            </th>
+            <th style="max-width: 80px; min-width:120px">
+               Tình Trạng
+            </th>
+            <th style="max-width: 100px; min-width: 100px">
+               Thao Tác
+            </th>
+         </tr>
+      </thead>
+      <tbody>
+         {{#each this.books}}
+         <tr>
+            <td id="MaSach">
+               {{MaSach}}
+            </td>
+            <td>
+               {{TenSach}}
+            </td>
+            <td>
+               {{NgayXuatBan}}
+            </td>
+            <td>
+              {{TenTacGia}}
+            </td>
+            <td>
+               {{HoTenNV}}
+            </td>
+            <td>
+               {{SoLuong}}
+            </td>
+            <td>
+               {{SoLuongDaMuon}}
+            </td>
+            <td>
+               {{TenTinhTrang}}
+            </td>
+            <td style="min-width: 20px; max-width: 20px">
+               <div class="row">
+                  <a
+                     class="btn btn-primary btn-sm mr-2 detailBook"
+                     style="margin-left: 5%"
+                     href="javascript;;"
+                     role="button"
+                     title="chi tiết"
+                     data-toggle="modal"
+                     data-target="#popupdetail"
+                     >
+                  <i class="fas fa-info-circle"></i>
+                  </a>
+                  <a
+                     class="btn btn-warning btn-sm mr-2"
+                     style="margin-left: 5%"
+                     href="/index/stocker/manager_book/edit?MaSach={{MaSach}}"
+                     role="button"
+                     title="chỉnh sửa"
+                     >
+                  <i class="far fa-edit"></i>
+                  </a>
+                  {{#if IsLock}}
+                  <a
+                     class="btn btn-danger btn-sm mr-2 delStaff"
+                     style="margin-left: 5%; pointer-events: none; opacity: 0.6"
+                     href="javascript;;"
+                     role="button"
+                     title="không được mượn"
+                     data-toggle="modal"
+                     data-target="#popupDelete"
+                     >
+                  <i class="fa fa-lock"></i>
+                  </a>
+                  {{else}}
+                  <a
+                     class="btn btn-danger btn-sm mr-2 delStaff"
+                     style="margin-left: 5%;"
+                     href="javascript;;"
+                     role="button"
+                     title="không được mượn"
+                     data-toggle="modal"
+                     data-target="#popupDelete"
+                     >
+                  <i class="fa fa-lock"></i>
+                  </a>
+                  {{/if}}
+               </div>
+            </td>
+         </tr>
+         {{/each}}
+      </tbody>
+   </table>
+   {{! KHU VỰC HIÊN POP UP }}
+   {{!-- pop up xóa --}}
+   <div class="modal fade centerModal" id="popupDelete" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+         <div class="modal-content">
+            <form method="POST" id="frmDelStaff">
+               <div class="modal-header">
+                  <h4 class="modal-title" id="exampleModalLabel">KHÓA SÁCH</h4>
+                  <button type="button" class="close" data-dismiss="modal"
+                     aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                  </button>
+               </div>
+               <div class="modal-body">
+                  <input hidden name="idSach" type="text" id="idSach" />
+                  <input hidden name="rIndex" type="text" id="rIndex" />
+                  <p style="font-size: 20px;">
+                     <b> Mã sách: 
+                     <span style="color:red" id="idBook"></span>
+                     </b>. Bấm <b>"đồng ý"</b> để chuyển sang trạng thái không thể mượn.
+                  </p>
+               </div>
+               <div class="modal-footer">
+                  <button type="submit" formaction=""
+                     class="btn btn-danger">Đông ý
+                  </button>
+            </form>
+            <button type="button" class="btn btn-light"
+               data-dismiss="modal">Thoát</button>
+            </div>
+         </div>
+      </div>
+  </div>
+</div>
+{{!-- Chi tiết sách--}}
+<div class="modal fade" id="popupdetail" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+   <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">THÔNG TIN CHI TIẾT</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+         </div>
+         <div class="modal-body">
+            <form action="">
+               <div class="row" style="pointer-events: none;cursor: default;">
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Mã Sách</span>
+                        </div>
+                        <input type="text" id="iMaSach" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Tên Sách</span>
+                        </div>
+                        <input type="text" id="TenSach" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Ngày Xuất Bản</span>
+                        </div>
+                        <input type="text" id="NgayXuatBan" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Tác Giả</span>
+                        </div>
+                        <input type="text" id="TenTacGia" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Thể Loại</span>
+                        </div>
+                        <input type="text" id="TenTheLoai" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Nhà Xuất Bản</span>
+                        </div>
+                        <input type="text" id="TenNXB" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Số Lượng</span>
+                        </div>
+                        <input type="text" id="SoLuong" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Số Lượng Đã Mượn</span>
+                        </div>
+                        <input type="text" id="SoLuongDaMuon" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Giá Tiền</span>
+                        </div>
+                        <input type="text" id="GiaTien" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Trạng thái</span>
+                        </div>
+                        <input type="text" id="TenTinhTrang" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Nhân viên tiếp nhận</span>
+                        </div>
+                        <input type="text" id="HoTenNV" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Ngày Nhập</span>
+                        </div>
+                        <input type="text" id="NgayNhap" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+               </div>
+            </form>
+         </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+         </div>
+      </div>
+   </div>
+</div>
+
+{{#section "js"}}
+{{!-- import to use datatable --}}
+<script src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script>
+{{!-- khúc script này cấu hình datatable--}}
+<script>
+   $(document).ready(function () {
+     $("#tblBook").DataTable();
+   });
+   $("#tblBook").dataTable({
+       language: {
+         sProcessing: "Đang xử lý...",
+         sLengthMenu: "Xem _MENU_ mục",
+         sZeroRecords: "Không tìm thấy dòng nào phù hợp",
+         sInfo: "Đang xem _START_ - _END_ trong _TOTAL_ mục",
+         sInfoEmpty: "Đang xem 0 đến 0 trong tổng số 0 mục",
+         sInfoFiltered: "(được lọc từ _MAX_ mục)",
+         sInfoPostFix: "",
+         sSearch: "Tìm:",
+         sUrl: "",
+         oPaginate: {
+           sFirst: "Đầu",
+           sPrevious: "Trước",
+           sNext: "Tiếp",
+           sLast: "Cuối",
+         },
+       },
+     });
+</script>
+{{!-- Khúc dưới này hiện chi tiết nhân viên --}}
+<script>
+   $("#tblBook").on("click", ".detailBook", function (event) {
+     var $row = $(this).closest("tr");
+     const MaSach = $row.find("#MaSach").text().trim();
+     $.getJSON(`/index/stocker/manager_book/detail?MaSach=${MaSach}`, function (data) {
+       if(data.length == 1){
+         $("#iMaSach").val(data[0].MaSach);
+         $("#TenSach").val(data[0].TenSach);
+         $("#NgayXuatBan").val(data[0].NgayXuatBan);
+         $("#TenTacGia").val(data[0].TenTacGia);
+         $("#TenTheLoai").val(data[0].TenTheLoai);
+         $("#TenNXB").val(data[0].TenNXB);
+         $("#SoLuong").val(data[0].SoLuong);
+         $("#SoLuongDaMuon").val(data[0].SoLuongDaMuon);
+         $("#GiaTien").val(data[0].GiaTien);
+         $("#TenTinhTrang").val(data[0].TenTinhTrang);
+         $("#HoTenNV").val(data[0].HoTenNV);
+         $("#NgayNhap").val(data[0].NgayNhap);
+         
+       }
+     });
+   });
+</script>
+{{!-- khúc script này xử lý sự kiện xóa --}}
+<script>
+   //lấy dữ liệu hiện popup
+   $(document).ready(function () {
+       $("#tblBook").on("click", ".delStaff", function (event) {
+           var $row = $(this).closest("tr");
+           $("#idBook").text($row.find("#MaSach").text());
+           $("#idSach").val($row.find("#MaSach").text());  
+           $("#rIndex").val($row.index()); 
+       });
+   });
+   
+   // gọi db xử lý
+    $('#frmDelStaff').on('submit', function (e) {
+       e.preventDefault();
+       validate();
+   })
+   function validate() {
+       let rIndex = $('#rIndex').val();
+       const MaSach = $('#idSach').val().trim();
+      if(rIndex == "" ||MaSach == ""){
+         $("[data-dismiss=modal]").trigger({ type: "click" });
+             setTimeout(function(){
+               Swal.fire({
+                 title: 'Thất bại.',
+                 icon: 'error',
+                 iconHtml: '',
+                 confirmButtonText: 'Trở về',
+                 showCloseButton: true
+               });
+         })
+         return false;
+      }
+       $.getJSON(`/index/stocker/manager_book/lock?MaSach=${MaSach}`, function (data) {
+         if (data) {
+             $("[data-dismiss=modal]").trigger({ type: "click" });
+             setTimeout(function(){
+               Swal.fire({
+                 title: 'Thành công',
+                 icon: 'success',
+                 iconHtml: '',
+                 confirmButtonText: 'Trở về',
+                 showCloseButton: true
+               });
+   
+               //cập nhật dữ liệu trong bảng
+               var table = $("#tblBook").DataTable();
+               var info = table.page.info();
+               const total = parseInt(info.recordsTotal);
+               const idnv = $('#idSach').val().trim();
+
+               for(i = 0; i < total; i++){
+                  var temp = table.row(i).data();
+                  if(temp[0].trim() == idnv){
+                     temp[7] = "Không thể mượn";
+                     // khúc dưới thêm css
+                     let start = temp[8].toString().lastIndexOf("5%");
+                     const halfFirst = temp[8].slice(0, start + 3);
+                     const halfEnd = temp[8].slice(start + 3);
+                     temp[8] = halfFirst + "pointer-events: none; opacity: 0.6" + halfEnd;
+                     $("#tblBook").dataTable().fnUpdate(temp, i,undefined,false);
+                  }
+               }
+             }, 600);
+           return false;
+         }else{
+            $("[data-dismiss=modal]").trigger({ type: "click" });
+             setTimeout(function(){
+               Swal.fire({
+                 title: 'Thất bại',
+                 'text': data,
+                 icon: 'error',
+                 iconHtml: '',
+                 confirmButtonText: 'Trở về',
+                 showCloseButton: true
+               })
+             }, 600);
+           return false;
+         }
+       })
+   }
+</script>
+{{/section}}
+

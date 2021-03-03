@@ -1,0 +1,715 @@
+{{#section "title"}}
+Quản lý Độc Giả
+{{/section}}
+{{#section "css"}}
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.min.css">
+<link
+   href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
+   rel="stylesheet"
+   />
+<link
+   rel="stylesheet"
+   href="https://cdn.datatables.net/1.10.23/css/jquery.dataTables.min.css"
+   />
+{{!-- Thông báo đẹp --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<style>
+   #tblReader input {
+      width: 100%;        
+      box-sizing: border-box;
+   }
+   .centerModal{
+    position: absolute;
+    float: left;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+   }
+</style>
+{{/section}}
+<div
+   class="container-fluid"
+   style="margin-top: 100px; background-color: white; padding: 15px"
+   >
+   <h1 style="color: black; margin-bottom:10px; text-align: center">
+      Quản Lý Độc Giả
+   </h1>
+   <h3 style="color: black; margin-bottom:30px; text-align: center">{{BoPhan}}</h3>
+   <a class="btn btn-primary mb-4" href="/index/manager_readers/add" style="font-weight: bold;">
+   <i class="fa fa-plus"></i> THÊM ĐỘC GIẢ
+   </a>
+   <div class="table-responsive text-center">
+    <table id="tblReader" class="display" style="width: 99%; margin-bottom: 20px">
+        <thead>
+          <tr>
+              <th>
+                Mã ĐG
+              </th>
+              <th style="min-width: 170px;">
+                Họ Và Tên
+              </th>
+              <th>
+                Loại Độc Giả
+              </th>
+              <th>
+                Ngày Sinh
+              </th>
+              <th>
+                Thư điện tử
+              </th>
+              <th>
+                Ngày Lập Thẻ
+              </th>
+              <th>
+                Người Lập
+              </th>
+              <th>
+                Trạng Thái
+              </th>
+              <th style="max-width: 100px; min-width: 100px">
+                Thao Tác
+              </th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each this.list}}
+          <tr>
+              <td id="MaDG">
+                {{MaDocGia}}
+              </td>
+              <td>
+                {{HoTenDG}}
+              </td>
+              <td>
+                {{TenLoaiDG}}
+              </td>
+              <td>
+                {{NgaySinh}}
+              </td>
+              <td>
+                {{Email}}
+              </td>
+              <td>
+                {{NgayLapThe}}
+              </td>
+              <td>
+                {{HoTenNV}}
+              </td>
+              <td>
+                {{LoaiTinhTrangDG}}
+              </td>
+              <td style="min-width: 20px; max-width: 20px">
+                <div class="row">
+                    <a
+                      class="btn btn-primary btn-sm mr-2 detailReader"
+                      style="margin-left: 5%"
+                      href="javascript;;"
+                      role="button"
+                      title="chi tiết"
+                      data-toggle="modal"
+                      data-target="#popupdetail"
+                      >
+                    <i class="fas fa-info-circle"></i>
+                    </a>
+                    <a
+                      class="btn btn-warning btn-sm mr-2 editReader"
+                      style="margin-left: 5%"
+                      href="javascript;;"
+                      role="button"
+                      title="chỉnh sửa"
+                      data-toggle="modal"
+                      data-target="#popupedit"
+                      >
+                      <i class="far fa-edit"></i>
+                    </a>
+                    {{#if isDeleted}}
+                    <a
+                      class="btn btn-danger btn-sm mr-2 delStaff"
+                      style="margin-left: 5%; pointer-events: none; opacity: 0.6"
+                      href="javascript;;"
+                      role="button"
+                      title="Xóa nhân viên"
+                      data-toggle="modal"
+                      data-target="#popupDelete"
+                      >
+                    <i class="fa fa-trash"></i>
+                    </a>
+                    {{else}}
+                    <a
+                      class="btn btn-danger btn-sm mr-2 delStaff"
+                      style="margin-left: 5%;"
+                      href="javascript;;"
+                      role="button"
+                      title="Xóa nhân viên"
+                      data-toggle="modal"
+                      data-target="#popupDelete"
+                      >
+                    <i class="fa fa-trash"></i>
+                    </a>
+                    {{/if}}
+                </div>
+              </td>
+          </tr>
+          {{/each}}
+        </tbody>
+    </table>
+   </div>
+   {{! KHU VỰC HIÊN POP UP }}
+   {{!-- pop up xóa --}}
+   <div class="modal fade centerModal" id="popupDelete" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+         <div class="modal-content">
+            <form method="POST" id="frmDelStaff">
+               <div class="modal-header">
+                  <h4 class="modal-title" id="exampleModalLabel">XÓA ĐỘC GIẢ</h4>
+                  <button type="button" class="close" data-dismiss="modal"
+                     aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                  </button>
+               </div>
+               <div class="modal-body">
+                  <input hidden name="madocgia" type="text" id="madocgia" />
+                  <input hidden name="rIndex" type="text" id="rIndex" />
+                  <p style="font-size: 20px;">
+                     <b> Mã độc giả: 
+                     <span style="color:red" id="idStaff"></span>
+                     </b>. Vui lòng bấm <b>"đồng ý"</b> để xóa.
+                  </p>
+               </div>
+               <div class="modal-footer">
+                  <button type="submit" formaction=""
+                     class="btn btn-danger">Đông ý
+                  </button>
+            </form>
+            <button type="button" class="btn btn-light"
+               data-dismiss="modal">Thoát</button>
+            </div>
+         </div>
+      </div>
+  </div>
+</div>
+{{!-- Chi tiết độc giả --}}
+<div class="modal fade" id="popupdetail" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+   <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">THÔNG TIN CHI TIẾT</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+         </div>
+         <div class="modal-body">
+            <form action="">
+               <div class="row" style="pointer-events: none;cursor: default;">
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Mã Độc  Giả</span>
+                        </div>
+                        <input type="text" id="dMaDocGia" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">CMND_CCCD</span>
+                        </div>
+                        <input type="text" id="dCMND_CCCD" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Họ và tên</span>
+                        </div>
+                        <input type="text" id="dHoTenDG" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Ngày sinh</span>
+                        </div>
+                        <input type="text" id="dNgaySinh" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Địa chỉ</span>
+                        </div>
+                        <input type="text" id="dDiaChi" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Thư điện tử</span>
+                        </div>
+                        <input type="text" id="dEmail" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Ngày lập thẻ</span>
+                        </div>
+                        <input type="text" id="dNgayLapThe" style="pointer-events: auto;cursor: default;" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Ngày Hết Hạn</span>
+                        </div>
+                        <input type="text" id="dNgayHetHan" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Tổng Nợ</span>
+                        </div>
+                        <input type="text" id="dTongNo" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Nhân Viên Lập Thẻ</span>
+                        </div>
+                        <input type="text" id="dNhanVienLT" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Loại độc giả</span>
+                        </div>
+                        <input type="text" id="dTenLoaiDG" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Tình Trạng</span>
+                        </div>
+                        <input type="text" id="dTinhTrang" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+               </div>
+            </form>
+         </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+         </div>
+      </div>
+   </div>
+</div>
+
+{{!-- Chỉnh sửa thông tin độc giả --}}
+<div class="modal fade" id="popupedit" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+   <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">CHỈNH SỬA THÔNG TIN ĐỘC GIẢ</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+         </div>
+         <div class="modal-body">
+            <form action="">
+               <div class="row">
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Mã Độc  Giả</span>
+                        </div>
+                        <input readonly type="text" id="cMaDocGia" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">CMND_CCCD</span>
+                        </div>
+                        <input type="text" id="cCMND_CCCD"  minlength="9" maxlength="12"  onkeypress="return isNumberKey(event)" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Họ và tên</span>
+                        </div>
+                        <input type="text" id="cHoTenDG" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Ngày sinh</span>
+                        </div>
+                        <input type="text" id="cNgaySinh" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Địa chỉ</span>
+                        </div>
+                        <input type="text" id="cDiaChi" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Thư điện tử</span>
+                        </div>
+                        <input type="text" id="cEmail" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                   <div class="col-sm-6">
+                    <div class="input-group input-group-ml mb-0">
+                        <div class="input-group mb-3">
+                          <div class="input-group-prepend">
+                              <label class="input-group-text" for="inputGroupSelect01">Lọa Độc Giả</label>
+                          </div>
+                          <select class="custom-select" id="cMaLoaiDocGia" name="cMaLoaiDocGia">
+                              <option value="LDG1">X</option>
+                              <option value="LDG2">Y</option>
+                          </select>
+                        </div>
+                    </div>
+                  </div>
+                  <div class="col-sm-6">
+                    <div class="input-group input-group-ml mb-0">
+                        <div class="input-group mb-3">
+                          <div class="input-group-prepend">
+                              <label class="input-group-text" for="inputGroupSelect01">Tình Trạng</label>
+                          </div>
+                          <select class="custom-select" id="cTinhTrang" name="cMaLoaiDocGia">
+                              <option value="TTDG01">Hoạt Động</option>
+                              <option value="TTDG02">Đã Xóa</option>
+                          </select>
+                        </div>
+                    </div>
+                  </div>
+               </div>
+            </form>
+         </div>
+         <div class="modal-footer">
+           <button type="button" class="btn btn-warning mr-2" onclick="CapNhatDocGia()">Cập nhật</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+         </div>
+      </div>
+   </div>
+</div>
+
+
+{{#section "js"}}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js"></script>
+<script>
+  function isNumberKey(e) {
+      var charCode = (e.which) ? e.which : e.keyCode;
+      if (charCode > 31 && (charCode < 48 || charCode > 57))
+          return false;
+      return true;
+  }
+</script>
+{{!-- import to use datatable --}}
+<script src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script>
+{{!-- khúc script này cấu hình datatable--}}
+<script>
+   $(document).ready(function () {
+     $("#tblReader").DataTable();
+   });
+   $("#tblReader").dataTable({
+       language: {
+         sProcessing: "Đang xử lý...",
+         sLengthMenu: "Xem _MENU_ mục",
+         sZeroRecords: "Không tìm thấy dòng nào phù hợp",
+         sInfo: "Đang xem _START_ - _END_ trong _TOTAL_ mục",
+         sInfoEmpty: "Đang xem 0 đến 0 trong tổng số 0 mục",
+         sInfoFiltered: "(được lọc từ _MAX_ mục)",
+         sInfoPostFix: "",
+         sSearch: "Tìm:",
+         sUrl: "",
+         oPaginate: {
+           sFirst: "Đầu",
+           sPrevious: "Trước",
+           sNext: "Tiếp",
+           sLast: "Cuối",
+         },
+       },
+     });
+</script>
+{{!-- Khúc dưới này hiện chi tiết độc giả--}}
+<script>
+   $("#tblReader").on("click", ".detailReader", function (event) {
+     var $row = $(this).closest("tr");
+     const MaDG = $row.find("#MaDG").text().trim();
+     $.getJSON(`/index/manager_readers/detail?MaDocGia=${MaDG}`, function (data) {
+       if(data.length == 1){
+         $("#dMaDocGia").val(data[0].MaDocGia);
+         $("#dHoTenDG").val(data[0].HoTenDG);
+         $("#dCMND_CCCD").val(data[0].CMND_CCCD);
+         $("#dEmail").val(data[0].Email);
+         $("#dDiaChi").val(data[0].DiaChi);
+         $("#dNgaySinh").val(data[0].NgaySinh);
+         $("#dTenLoaiDG").val(data[0].TenLoaiDG);
+         $("#dTongNo").val(parseInt(data[0].TongNo).toLocaleString("it-IT", {
+                style: "currency",
+                currency: "VND",
+              }));
+         $("#dNgayLapThe").val(data[0].NgayLapThe);
+         $("#dNgayHetHan").val(data[0].NgayHetHan);
+         $("#dNhanVienLT").val(data[0].NVLapThe + " - " + data[0].HoTenNV);
+         if(data[0].TTDG == 'TTDG02'){
+           $("#dTinhTrang").val("Đã xóa");
+         }else{
+           $("#dTinhTrang").val("Đăng hoạt động");
+         }
+       }
+     });
+   });
+</script>
+
+{{!-- Khúc dưới này chỉnh sửa thông tin độc giả --}}
+<script>
+  $("#tblReader").on("click", ".editReader", function (event) {
+    $('#popupedit').modal({backdrop: 'static', keyboard: false});
+    var $row = $(this).closest("tr");
+    const MaDG = $row.find("#MaDG").text().trim();
+    console.log(MaDG);
+    $.getJSON(`/index/manager_readers/detail?MaDocGia=${MaDG}`, function (data) {
+      if(data.length == 1){
+        console.log(data);
+        $('#cNgaySinh').datetimepicker({
+        format: 'd/m/Y',
+          timepicker: false,
+          mask: true,
+        });
+        $("#cMaDocGia").val(data[0].MaDocGia);
+        $("#cHoTenDG").val(data[0].HoTenDG);
+        $("#cCMND_CCCD").val(data[0].CMND_CCCD);
+        $("#cEmail").val(data[0].Email);
+        $("#cDiaChi").val(data[0].DiaChi);
+        $("#cNgaySinh").val(data[0].NgaySinh);
+        $("#cMaLoaiDocGia").val(data[0].MaLoaiDG);
+        $("#cTinhTrang").val(data[0].TTDG);
+      }else{
+        $('#popupedit').hide();
+        Swal.fire({
+          title: 'Không lấy được thông tin vui lòng thử lại',
+          icon: 'error',
+          iconHtml: '',
+          confirmButtonText: 'Trở về',
+          showCloseButton: true
+        })
+      }
+    });
+  });
+  function validateEmail(VAL) {           
+     var email = new RegExp('^[a-z0-9](\.?[a-z0-9]){5,}@g(oogle)?mail\.com$');
+     return email.test(VAL);
+  }
+  function CapNhatDocGia(){
+    const MaDocGia = $("#cMaDocGia").val().trim();
+    const HoTenDG = $("#cHoTenDG").val().trim();
+    const CMND_CCCD = $("#cCMND_CCCD").val().trim();
+    const DiaChi = $("#cDiaChi").val().trim();
+    const Email = $("#cEmail").val().trim();
+    const NgaySinh = $("#cNgaySinh").val().trim();
+    const MaLoaiDocGia = $("#cMaLoaiDocGia").val().trim();
+    const TinhTrang = $("#cTinhTrang").val().trim();
+
+    if(MaDocGia == ""){
+      Swal.fire({
+          title: 'Họ tên độc giả không được rỗng',
+          icon: 'error',
+          iconHtml: '',
+          confirmButtonText: 'Trở về',
+          showCloseButton: true
+      })
+      return false;
+    }
+    if(HoTenDG == ""){
+      Swal.fire({
+          title: 'Họ tên độc giả không được rỗng',
+          icon: 'error',
+          iconHtml: '',
+          confirmButtonText: 'Trở về',
+          showCloseButton: true
+      })
+      return false;
+    }
+    if(DiaChi == ""){
+      Swal.fire({
+          title: 'Địa chỉ không được rỗng',
+          icon: 'error',
+          iconHtml: '',
+          confirmButtonText: 'Trở về',
+          showCloseButton: true
+      })
+      return false;
+    }
+    if(Email == ""){
+       Swal.fire({
+          title: 'Thư điện tử không được rỗng.',
+          icon: 'error',
+          iconHtml: '',
+          confirmButtonText: 'Trở về',
+          showCloseButton: true
+       });
+       return false;
+    }
+    if(NgaySinh == "" || NgaySinh == "__/__/____"){
+      Swal.fire({
+          title: 'Ngày sinh của độc giả không được rỗng',
+          icon: 'error',
+          iconHtml: '',
+          confirmButtonText: 'Trở về',
+          showCloseButton: true
+      })
+      return false;
+    }
+    if(!validateEmail(Email)){
+       Swal.fire({
+          title: 'Thư điện tử không hợp lệ',
+          icon: 'error',
+          iconHtml: '',
+          confirmButtonText: 'Trở về',
+          showCloseButton: true
+       });
+       return false;
+    }
+      if(HoTenDG == ""){
+      Swal.fire({
+          title: 'Họ tên độc giả không được rỗng',
+          icon: 'error',
+          iconHtml: '',
+          confirmButtonText: 'Trở về',
+          showCloseButton: true
+      })
+      return false;
+    }
+    $.getJSON(`/index/manager_readers/add/isValidPassPort/condition?CMND_CCCD=${CMND_CCCD}&MaDocGia=${MaDocGia}`, function (data) {
+      if (data){
+        Swal.fire({
+        title: 'Số CMND/CCCD đã được sử dụng',
+        icon: 'error',
+        iconHtml: '',
+        confirmButtonText: 'Trở về',
+        showCloseButton: true
+        });
+        return false;
+      }
+    });
+     $.getJSON(`/index/manager_readers/edit?CMND_CCCD=${CMND_CCCD}&MaDocGia=${MaDocGia}&Email=${Email}&HoTenDG=${HoTenDG}&DiaChi=${DiaChi}&NgaySinh=${NgaySinh}&MaLoaiDG=${MaLoaiDocGia}&TTDG=${TinhTrang}`, function (data) {
+        if (data){
+          Swal.fire({
+          title: 'Cập nhật thông tin độc giả thành công',
+          icon: 'success',
+          iconHtml: '',
+          confirmButtonText: 'Trở về',
+          showCloseButton: true
+          }).then(function() {
+                window.location = "http://localhost:3000/index/manager_readers";
+            });
+          return false;
+        }else{
+          Swal.fire({
+            title: 'Cập nhật thông tin độc giả không thành công',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          })
+        }
+     });
+  };
+</script>
+{{!-- khúc script này xử lý sự kiện xóa --}}
+<script>
+   //lấy dữ liệu hiện popup
+   $(document).ready(function () {
+       $("#tblReader").on("click", ".delStaff", function (event) {
+           var $row = $(this).closest("tr");
+           $("#idStaff").text($row.find("#MaDG").text());
+           $("#madocgia").val($row.find("#MaDG").text());  
+           $("#rIndex").val($row.index()); 
+       });
+   });
+   
+   // gọi db xử lý
+    $('#frmDelStaff').on('submit', function (e) {
+       e.preventDefault();
+       validate();
+   })
+   function validate() {
+       let rIndex = $('#rIndex').val();
+       const MaDG = $('#madocgia').val().trim();
+      if(rIndex == "" ||MaDG == ""){
+         $("[data-dismiss=modal]").trigger({ type: "click" });
+             setTimeout(function(){
+               Swal.fire({
+                 title: 'Thất bại.',
+                 icon: 'error',
+                 iconHtml: '',
+                 confirmButtonText: 'Trở về',
+                 showCloseButton: true
+               });
+         })
+         return false;
+      }
+       $.getJSON(`/index/manager_readers/deleted?MaDocGia=${MaDG}`, function (data) {
+         if (data) {
+             $("[data-dismiss=modal]").trigger({ type: "click" });
+             setTimeout(function(){
+               Swal.fire({
+                 title: 'Thành công',
+                 icon: 'success',
+                 iconHtml: '',
+                 confirmButtonText: 'Trở về',
+                 showCloseButton: true
+               });
+   
+               //cập nhật dữ liệu trong bảng
+               var table = $("#tblReader").DataTable();
+               var info = table.page.info();
+               const total = parseInt(info.recordsTotal);
+               const idnv = $('#madocgia').val().trim();
+
+               for(i = 0; i < total; i++){
+                  var temp = table.row(i).data();
+                  if(temp[0].trim() == idnv){
+                     temp[7] = "Đã xóa";
+                     // khúc dưới thêm css
+                     let start = temp[8].toString().lastIndexOf("5%");
+                     const halfFirst = temp[8].slice(0, start + 3);
+                     const halfEnd = temp[8].slice(start + 3);
+                     temp[8] = halfFirst + "pointer-events: none; opacity: 0.6" + halfEnd;
+                     $("#tblReader").dataTable().fnUpdate(temp, i,undefined,false);
+                  }
+               }
+             }, 600);
+           return false;
+         }else{
+            $("[data-dismiss=modal]").trigger({ type: "click" });
+             setTimeout(function(){
+               Swal.fire({
+                 title: 'Thất bại',
+                 'text': data,
+                 icon: 'error',
+                 iconHtml: '',
+                 confirmButtonText: 'Trở về',
+                 showCloseButton: true
+               })
+             }, 600);
+           return false;
+         }
+       })
+   }
+</script>
+{{/section}}
+

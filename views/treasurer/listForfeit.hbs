@@ -1,0 +1,357 @@
+{{#section "title"}}
+Danh Sách Phiếu Thu Tiền Phạt
+{{/section}}
+{{#section "css"}}
+<link
+   href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
+   rel="stylesheet"
+   />
+<link
+   rel="stylesheet"
+   href="https://cdn.datatables.net/1.10.23/css/jquery.dataTables.min.css"
+   />
+{{!-- Thông báo đẹp --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<style>
+   #tblStaff input {
+      width: 100%;        
+      box-sizing: border-box;
+   }
+   .centerModal{
+    position: absolute;
+    float: left;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+   }
+</style>
+{{/section}}
+<div
+   class="container-fluid"
+   style="margin-top: 100px; background-color: white; padding: 15px"
+   >
+   <h1 style="color: black; margin-bottom:10px; text-align: center">
+      DANH SÁCH PHIẾU THU TIỀN PHẠT
+   </h1>
+   <h3 style="color: black; margin-bottom:30px; text-align: center">{{BoPhan}}</h3>
+   <a class="btn btn-primary mb-4" href="/index/forfeit/add" style="font-weight: bold;">
+   <i class="fa fa-plus"></i> THÊM PHIẾU THU
+   </a>
+   <div class="table-responsive">
+      <table id="tblStaff" class="display" style="width: 100%; margin-bottom: 20px">
+         <thead style="text-align: center;">
+            <tr>
+               <th>
+                  Mã Phiếu Thu
+               </th>
+               <th style="min-width: 170px;">
+                  Mã Phiếu Trả
+               </th>
+               <th>
+                  Nhân Viện Lập Phiếu
+               </th>
+               <th>
+                  Ngày Thu
+               </th>
+               <th>
+                  Số Tiền Thu
+               </th>
+            </tr>
+         </thead>
+         <tbody style="text-align: center;">
+            {{#each this.lists}}
+            <tr>
+               <td id="MaPT">
+                  {{MaPhieuThu}}
+               </td>
+               <td>
+                  {{MaPT}}
+               </td>
+               <td>
+                  {{MaNV}} - {{HoTenNV}}
+               </td>
+               <td>
+               {{NgayThu}}
+               </td>
+               <td>
+                  {{SoTienThu}}
+               </td>
+            </tr>
+            {{/each}}
+         </tbody>
+      </table>
+   </div>
+   {{! KHU VỰC HIÊN POP UP }}
+   {{!-- pop up xóa --}}
+   <div class="modal fade centerModal" id="popupDelete" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+         <div class="modal-content">
+            <form method="POST" id="frmDelStaff">
+               <div class="modal-header">
+                  <h4 class="modal-title" id="exampleModalLabel">XÓA ĐỘC GIẢ</h4>
+                  <button type="button" class="close" data-dismiss="modal"
+                     aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                  </button>
+               </div>
+               <div class="modal-body">
+                  <input hidden name="madocgia" type="text" id="madocgia" />
+                  <input hidden name="rIndex" type="text" id="rIndex" />
+                  <p style="font-size: 20px;">
+                     <b> Mã độc giả: 
+                     <span style="color:red" id="idStaff"></span>
+                     </b>. Vui lòng bấm <b>"đồng ý"</b> để xóa.
+                  </p>
+               </div>
+               <div class="modal-footer">
+                  <button type="submit" formaction=""
+                     class="btn btn-danger">Đông ý
+                  </button>
+            </form>
+            <button type="button" class="btn btn-light"
+               data-dismiss="modal">Thoát</button>
+            </div>
+         </div>
+      </div>
+  </div>
+</div>
+{{!-- Chi tiết nhân viên--}}
+<div class="modal fade" id="popupdetail" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+   <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">THÔNG TIN CHI TIẾT</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+         </div>
+         <div class="modal-body">
+            <form action="">
+               <div class="row" style="pointer-events: none;cursor: default;">
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Mã nhân viên</span>
+                        </div>
+                        <input type="text" id="madocgia" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Họ và tên</span>
+                        </div>
+                        <input type="text" id="HoTenNV" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Giới Tính</span>
+                        </div>
+                        <input type="text" id="GioiTinh" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Ngày sinh</span>
+                        </div>
+                        <input type="text" id="NgaySinh" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Số điện thoại</span>
+                        </div>
+                        <input type="text" id="Sdt" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Địa chỉ</span>
+                        </div>
+                        <input type="text" id="DiaChi" style="pointer-events: auto;cursor: default;" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Bằng cấp</span>
+                        </div>
+                        <input type="text" id="BangCap" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Bộ phận</span>
+                        </div>
+                        <input type="text" id="BoPhan" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Chức vụ</span>
+                        </div>
+                        <input type="text" id="ChucVu" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Trạng thái</span>
+                        </div>
+                        <input type="text" id="TrangThai" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+               </div>
+            </form>
+         </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+         </div>
+      </div>
+   </div>
+</div>
+
+{{#section "js"}}
+{{!-- import to use datatable --}}
+<script src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script>
+{{!-- khúc script này cấu hình datatable--}}
+<script>
+   $(document).ready(function () {
+     $("#tblStaff").DataTable();
+   });
+   $("#tblStaff").dataTable({
+       language: {
+         sProcessing: "Đang xử lý...",
+         sLengthMenu: "Xem _MENU_ mục",
+         sZeroRecords: "Không tìm thấy dòng nào phù hợp",
+         sInfo: "Đang xem _START_ - _END_ trong _TOTAL_ mục",
+         sInfoEmpty: "Đang xem 0 đến 0 trong tổng số 0 mục",
+         sInfoFiltered: "(được lọc từ _MAX_ mục)",
+         sInfoPostFix: "",
+         sSearch: "Tìm:",
+         sUrl: "",
+         oPaginate: {
+           sFirst: "Đầu",
+           sPrevious: "Trước",
+           sNext: "Tiếp",
+           sLast: "Cuối",
+         },
+       },
+     });
+</script>
+{{!-- Khúc dưới này hiện chi tiết nhân viên --}}
+<script>
+   $("#tblStaff").on("click", ".detailStaff", function (event) {
+     var $row = $(this).closest("tr");
+     const MaDG = $row.find("#MaDG").text().trim();
+     $.getJSON(`/index/staff/detail?MaDG=${MaDG}`, function (data) {
+       if(data.length == 1){
+         $("#madocgia").val(data[0].madocgia);
+         $("#HoTenNV").val(data[0].HoTenNV);
+         $("#GioiTinh").val(data[0].GioiTinh);
+         $("#Sdt").val(data[0].Sdt);
+         $("#NgaySinh").val(data[0].NgaySinh);
+         $("#DiaChi").val(data[0].DiaChi);
+         $("#BangCap").val(data[0].LoaiBangCap);
+         $("#ChucVu").val(data[0].TenChucVu);
+         $("#BoPhan").val(data[0].TenBoPhan);
+         if(data[0].isDeleted){
+           $("#TrangThai").val("Đã xóa");
+         }else{
+           $("#TrangThai").val("Đăng hoạt động");
+         }
+       }
+     });
+   });
+</script>
+{{!-- khúc script này xử lý sự kiện xóa --}}
+<script>
+   //lấy dữ liệu hiện popup
+   $(document).ready(function () {
+       $("#tblStaff").on("click", ".delStaff", function (event) {
+           var $row = $(this).closest("tr");
+           $("#idStaff").text($row.find("#MaDG").text());
+           $("#madocgia").val($row.find("#MaDG").text());  
+           $("#rIndex").val($row.index()); 
+       });
+   });
+   
+   // gọi db xử lý
+    $('#frmDelStaff').on('submit', function (e) {
+       e.preventDefault();
+       validate();
+   })
+   function validate() {
+       let rIndex = $('#rIndex').val();
+       const MaDG = $('#madocgia').val().trim();
+      if(rIndex == "" ||MaDG == ""){
+         $("[data-dismiss=modal]").trigger({ type: "click" });
+             setTimeout(function(){
+               Swal.fire({
+                 title: 'Thất bại.',
+                 icon: 'error',
+                 iconHtml: '',
+                 confirmButtonText: 'Trở về',
+                 showCloseButton: true
+               });
+         })
+         return false;
+      }
+       $.getJSON(`/index/manager_readers/deleted?MaDocGia=${MaDG}`, function (data) {
+         if (data) {
+             $("[data-dismiss=modal]").trigger({ type: "click" });
+             setTimeout(function(){
+               Swal.fire({
+                 title: 'Thành công',
+                 icon: 'success',
+                 iconHtml: '',
+                 confirmButtonText: 'Trở về',
+                 showCloseButton: true
+               });
+   
+               //cập nhật dữ liệu trong bảng
+               var table = $("#tblStaff").DataTable();
+               var info = table.page.info();
+               const total = parseInt(info.recordsTotal);
+               const idnv = $('#madocgia').val().trim();
+
+               for(i = 0; i < total; i++){
+                  var temp = table.row(i).data();
+                  if(temp[0].trim() == idnv){
+                     temp[7] = "Đã xóa";
+                     // khúc dưới thêm css
+                     let start = temp[8].toString().lastIndexOf("5%");
+                     const halfFirst = temp[8].slice(0, start + 3);
+                     const halfEnd = temp[8].slice(start + 3);
+                     temp[8] = halfFirst + "pointer-events: none; opacity: 0.6" + halfEnd;
+                     $("#tblStaff").dataTable().fnUpdate(temp, i,undefined,false);
+                  }
+               }
+             }, 600);
+           return false;
+         }else{
+            $("[data-dismiss=modal]").trigger({ type: "click" });
+             setTimeout(function(){
+               Swal.fire({
+                 title: 'Thất bại',
+                 'text': data,
+                 icon: 'error',
+                 iconHtml: '',
+                 confirmButtonText: 'Trở về',
+                 showCloseButton: true
+               })
+             }, 600);
+           return false;
+         }
+       })
+   }
+</script>
+{{/section}}
+

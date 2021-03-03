@@ -1,0 +1,642 @@
+{{#section "title"}}
+Thêm phiếu mượn sách
+{{/section}}
+
+{{#section 'css'}}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.min.css">
+  <style>
+     thead, td{
+      text-align: center;;
+   }
+   #tblBook input {
+      width: 100%;        
+      box-sizing: border-box;
+   }
+  </style>
+{{/section}}
+
+{{#section 'js'}}
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js"></script>
+   {{!-- Thông báo đẹp --}}
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+   {{!-- import to use datatable --}}
+  <script src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script>
+   {{!-- Khúc này format ngày mượn với ngày hết hạn --}}
+   <script>
+      Number.prototype.padLeft = function(base,chr){
+         var  len = (String(base || 10).length - String(this).length)+1;
+         return len > 0? new Array(len).join(chr || '0')+this : this;
+      }
+      function leapYear(year)
+      {
+         return ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0);
+      }
+      function formatDate(d){
+         dformat = [(d.getMonth()+1).padLeft(),
+               d.getDate().padLeft(),
+               d.getFullYear()].join('/');
+         var arr = dformat.split('/');
+         dformat = arr[1] +"/"+ arr[0]+"/" + arr[2];
+         return dformat;
+      }
+      const dayStart = new Date();
+      $('#NgayMuon').val(formatDate(dayStart));
+      $('#NgayHetHan').datetimepicker({
+         format: 'd/m/Y',
+         timepicker: false,
+         mask: true,
+      });
+   </script>
+   {{!-- không cho tắt modal thêm sách khi click bên ngoài biểu mẫu --}}
+   <script>
+     let sosachdm = 0;
+     function disableModalAddBorrowBook(){
+        $('#popupAddBorowBook').modal({backdrop: 'static', keyboard: false});
+     }
+   </script>
+    {{!-- Khúc này hiện nút thêm sách --}}
+   <script>
+      function process(date){
+        var parts = date.split("/");
+        return new Date(parts[2], parts[1] - 1, parts[0]);
+      }
+     function ShowButtonAddBook(){
+       let MaDocGia = $("#MaDocGia").val().trim();
+       const NgayMuon = $("#NgayMuon").val().trim();
+       const NgayHetHan = $("#NgayHetHan").val().trim();
+       if(MaDocGia.length < 1 || NgayHetHan == "" || NgayHetHan == "__/__/____"){
+          $('#btnAddBook').prop('disabled', true);
+         return false;
+       }
+
+      // chuyển về mã đọc giả gốc
+      MaDocGia = MaDocGia.split("-");
+      // Chỉ cho mượn với thẻ còn hạn
+      $.getJSON(`/index/borrow_book/validateReader?MaDocGia=${MaDocGia[0]}`, function (data) {
+        if(data == "1001"){
+          Swal.fire({
+            title: 'Hệ thống có lỗi, vui lòng tải lại trang và thử lại!!!',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          $('#btnAddBook').prop('disabled', true);
+          return false;
+        }
+        if(data == "404"){
+          Swal.fire({
+            title: 'Thẻ độc giả đã hết hạn, vui lòng gia hạn thẻ',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          $('#btnAddBook').prop('disabled', true);
+          return false;
+        }
+        // không có sách mượn quá hạn(Không có phiếu mượn quá hạn)
+        if(data == "1002"){
+          Swal.fire({
+            title: 'Độc giả có phiếu mượn sách quá hạn, chưa trả sách và đóng tiền phạt',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          $('#btnAddBook').prop('disabled', true);
+        }
+        //Mỗi độc giả mượn tối đa 5 quyển sách trong 4 ngày.
+        if(data == "1003"){
+          Swal.fire({
+            title: 'Độc giả đã mượn 5 quyển sách trong vòng Bốn ngày',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          $('#btnAddBook').prop('disabled', true);
+        }
+        sosachdm = data;
+      });
+
+       // kiểm tra ngày hết hạn
+      if(process(NgayMuon) >= process(NgayHetHan)){
+        Swal.fire({
+              title: 'Ngày hết hạn không được bé hơn hoặc bằng ngày mượn',
+              icon: 'error',
+              iconHtml: '',
+              confirmButtonText: 'Trở về',
+              showCloseButton: true
+        });
+        $('#btnAddBook').prop('disabled', true);
+        return false;
+      }
+
+      $('#btnAddBook').prop('disabled', false);
+     }
+   </script>
+    {{!-- khúc này hiện nút thêm mới --}}
+    <script>
+      document.getElementById('element').onclick = function(e){
+        //console.log(sosachdm);
+        rows = $('#tblBook >tbody >tr').length;
+        ShowButtonAddBook();
+        if(parseInt(rows) > 0){
+          $('#btnAdd').prop('disabled', false);
+          $('#message').hide();
+        }else{
+          $('#message').show();
+          $('#btnAdd').prop('disabled', true);
+        }
+        
+      }
+    </script>
+    {{!-- Khúc này lấy info của sách mượn --}}
+    <script>
+      function LayThongTinSachMuon(){
+        const MaSachMuon = $("#MaSachMuon").val().trim();
+         $.getJSON(`/index/borrow_book/getInfoBookByID?MaSach=${MaSachMuon}`, function (data) {
+           if(data == false){
+            Swal.fire({
+              title: 'Hệ thống không tìm được thông tin sách',
+              icon: 'error',
+              iconHtml: '',
+              confirmButtonText: 'Trở về',
+              showCloseButton: true
+            });
+            $("#TenSachMuon").val("");
+            $("#TenTheLoaiSM").val("");
+            $("#TenTacGiaSM").val("");
+            $("#NhaXBSM").val("");
+            $("#TinhTrangSM").val("");
+            $('#themsachmuon').prop('disabled', true);
+           }else{
+             $("#TenSachMuon").val(data.TenSach);
+             $("#TenTheLoaiSM").val(data.TenTheLoai);
+             $("#TenTacGiaSM").val(data.TenTacGia);
+             $("#NhaXBSM").val(data.TenNXB);
+             $("#TinhTrangSM").val(data.TenTinhTrang);
+             if(data.TenTinhTrang == "Có thể mượn"){
+               $('#themsachmuon').prop('disabled', false);
+             }else{
+               $('#themsachmuon').prop('disabled', true);
+             }
+           }
+         });
+      }
+    </script>
+    {{!-- Khúc này thêm sách mới vô bảng  --}}
+    <script>
+      function ThemSachMuonMoi(){
+        let rows = $('#tblBook >tbody >tr').length;
+        const STT = parseInt(rows) + 1;
+        const MaSach = $('#MaSachMuon').val().trim();
+        const TenSach = $("#TenSachMuon").val();
+        const TenTheLoai = $("#TenTheLoaiSM").val();
+        const TenTacGia = $("#TenTacGiaSM").val();
+        let notRun = false;
+        if(parseInt(rows) + parseInt(sosachdm) >= 5){
+          Swal.fire({
+            title: 'Không thể thêm sách mượn nữa. Lý do: Hiện tại đã độc giả đã mượn 5 cuốn trong vòng 4 ngày',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          notRun = true;
+        }else{
+          var table = $('#tblBook > tbody');
+          table.find('tr').each(function (i, el) {
+              var $tds = $(this).find('td');
+              const _MaSach = $tds.eq(1).text().trim();
+              if(MaSach == _MaSach){
+                notRun = true;
+              }else{
+                notRun = false;
+              }
+          });
+        }
+        if(notRun == false){
+          $('#tblBook > tbody:last').append(`
+            <tr> 
+                <td class="STT">${STT}</td>
+                <td>${MaSach}</td>
+                <td>${TenSach}</td>
+                <td>${TenTheLoai}</td>
+                <td>${TenTacGia}</td>
+                <td>1 cuốn</td>
+                <td> 
+                  <a class="btn btn-danger btn-remove-tr" title="Xóa Sách" style="font-weight: bold;">
+                    <i class="fa fa-trash" style="color:white"></i>
+                  </a>
+                </td>
+            </tr>
+            `);
+        }
+        rows = $('#tblBook >tbody >tr').length;
+        if(parseInt(rows) > 0){
+          $('#btnAdd').prop('disabled', false);
+          $('#message').hide();
+        }else{
+          $('#message').show();
+        }
+      }
+    </script>
+
+    {{!-- Khúc này xóa sách mượn --}}
+    <script>
+      $('table').on('click', '.btn-remove-tr', function(e) {
+        if($('table >tbody >tr').length > 1) {
+            $(this).closest('tr').remove();
+            $('td.STT').text(function (i) {
+              return i + 1;
+            });
+              
+        }else{
+          $(this).closest('tr').remove();
+        }
+        return false;
+      });
+    </script>
+
+    {{!-- Thêm phiếu mượn sách --}}
+    <script>
+      function ThemPhieuMuonMoi(){
+        let MaDocGia = $("#MaDocGia").val().trim();
+        const NgayHetHan = $("#NgayHetHan").val().trim();
+        const GhiChu = $("#GhiChu").val().trim();
+        const NgayMuon = $("#NgayMuon").val().trim();
+        let aBooks = [];
+        if(MaDocGia == ""){
+          Swal.fire({
+            title: 'Mã độc giả không được rỗng',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+        if(NgayMuon == ""){
+          Swal.fire({
+            title: 'Ngày mượn không được rỗng',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+        if(NgayHetHan == ""){
+          Swal.fire({
+            title: 'Ngày hết hạn không được rỗng',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+        rows = $('#tblBook >tbody >tr').length;
+        if(parseInt(rows) < 1){
+          Swal.fire({
+            title: 'Sách mượn không được rỗng',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        };
+        // Khúc này lấy dữ liệu datatable
+        var table = $('#tblBook >tbody');
+          table.find('tr').each(function (i, el) {
+            var $tds = $(this).find('td');
+            aBooks.push($tds.eq(1).text().trim());
+        });
+        if(aBooks.length < 1){
+          Swal.fire({
+            title: 'Không lấy được thông tin sách mượn vui lòng thử lại',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+        MaDocGia = MaDocGia.split(" - ");
+        $.getJSON(`/index/borrow_book/add/post?MaDocGia=${MaDocGia[0]}&NgayMuon=${NgayMuon}&NgayHetHan=${NgayHetHan}&GhiChu=${GhiChu}&aBooks=${aBooks}&`, function (data) {
+          if(data){
+            Swal.fire({
+              title: 'Thêm phiếu mượn thành công',
+              icon: 'success',
+              iconHtml: '',
+              confirmButtonText: 'Trở về',
+              showCloseButton: true
+            }).then(function() {
+                window.location = "http://localhost:3000/index/borrow_book";
+            });
+          }else{
+            Swal.fire({
+              title: 'Thêm phiếu mượn không thành công',
+              icon: 'error',
+              iconHtml: '',
+              confirmButtonText: 'Trở về',
+              showCloseButton: true 
+            });
+          }
+        });
+      }
+
+    </script>
+{{/section}}
+
+<div id="element" class="container">
+    <h1 style="margin-top: 100px; margin-bottom: 50px; text-align: center">
+    THÊM PHIẾU MƯỢN SÁCH
+    </h1>
+   <div class="row" style="margin-bottom: 20px;">
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-0">
+            <div class="input-group mb-3">
+               <div class="input-group-prepend">
+                  <label class="input-group-text" for="inputGroupSelect01">Độc Giả</label>
+               </div>
+                <input list="dsdocgia" value="" onchange="ShowButtonAddBook()" placeholder="nhập mã độc giả hoặc tên để tìm kiếm" id="MaDocGia" class="form-control">
+                <datalist id="dsdocgia">
+                  {{#each this.ListReaders}}
+                    <option value="{{MaDocGia}} - {{HoTenDG}} - {{CMND_CCCD}}">
+                  {{/each}}
+                </datalist>  
+            </div>
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+                 Ngày Mượn
+               </span>
+            </div>
+            <input
+               type="text"
+               id="NgayMuon"
+               readonly
+               name="NgayMuon"
+               value=""
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+                 Ngày Hết Hạn
+               </span>
+            </div>
+            <input
+                onchange="ShowButtonAddBook()"
+               type="text"
+               id="NgayHetHan"
+               name="NgayHetHan"
+               value=""
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div hidden class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+                  Tình Trạng
+               </span>
+            </div>
+            <input
+              readonly
+              type="text"
+              id="TenTinhTrang"
+              name="TenTinhTrang"
+              value=""
+              class="form-control"
+              aria-label="Sizing example input"
+              aria-describedby="inputGroup-sizing-sm"
+            />
+         </div>
+      </div>
+      <div class="col-sm-12">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Ghi Chú
+               </span>
+            </div>
+             <textarea class="form-control" id="GhiChu" rows="2"></textarea>
+         </div>
+      </div>
+      <div class="col-sm-12">
+        <h2 class="text-center mb-3 mt-1"> Sách Mượn </h2>
+      </div>
+      <div class="col-sm-12">
+        <button disabled id="btnAddBook" class="btn btn-primary mb-4" onclick="disableModalAddBorrowBook()" href="javascript;;" style="font-weight: bold;" data-toggle="modal" data-target="#popupAddBorowBook">
+            <i class="fa fa-plus"></i> THÊM SÁCH MƯỢN
+        </button>
+      </div>
+      <div class="col-sm-12">
+        <table id="tblBook" name="tblBook" class="table table-bordered"  style="width: 100%; margin-bottom: 20px">
+            <thead>
+              <tr>
+                  <th>
+                    STT
+                  </th>
+                  <th style="min-width: 170px;">
+                    Mã Sách
+                  </th>
+                  <th>
+                    Tên Sách
+                  </th>
+                  <th>
+                    Thể Loại
+                  </th>
+                  <th>
+                    Tác Giả
+                  </th>
+                  <th>
+                    Số Lượng
+                  </th>
+                  <th style="max-width: 100px; min-width: 100px">
+                    Thao Tác
+                  </th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+      </div>
+      <div class="col-sm-12">
+        <p id="message" style="font-weight: bold; text-align: center; margin-bottom: 50px">Chưa có sách mượn</p>
+      </div>
+    </div>
+      <div class="row" style="margin-bottom: 40px;">
+        <div class="col-sm-6">
+          <a href="/index/borrow_book" class="btn btn-secondary w-100 text-white font-weight-bold mb-3">
+            <i class="fas fa-arrow-left"></i> TRỞ VỀ
+          </a>
+        </div>
+        <div class="col-sm-6">
+            <button disabled onclick="ThemPhieuMuonMoi()" type="submit" id="btnAdd" class="btn btn-primary w-100 mr-2 text-white font-weight-bold"><i class="fa fa-plus"></i> THÊM MỚI</button>
+        </div>
+      </div>
+  </div>
+</div>
+
+  {{!-- pop up add borrow book --}}
+   <div class="modal fade centerModal" id="popupAddBorowBook" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+         <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title" id="exampleModalLabel">THÊM SÁCH MƯỢN</h4>
+              <button type="button" class="close" data-dismiss="modal"
+                     aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+
+              <div class="row">
+
+                <div class="col-sm-6">
+                  <div class="input-group input-group-ml mb-0">
+                      <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="inputGroupSelect01">Tìm Sách</label>
+                        </div>
+                        <input list="dsSach" onchange="LayThongTinSachMuon()" id="MaSachMuon" placeholder="nhập mã sách hoặc tên sách" class="form-control">
+                        <datalist id="dsSach">
+                           {{#each this.ListBook}}
+                              <option value="{{MaSach}}"> Tên sách: {{TenSach}} - Tác Giả: {{TenTacGia}}</option>
+                            {{/each}}
+                        </datalist>  
+                      </div>
+                  </div>
+                </div>
+
+                <div class="col-sm-6">
+                  <div class="input-group input-group-ml mb-3">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text" id="inputGroup-sizing-sm">
+                        Tên Sách
+                        </span>
+                      </div>
+                      <input
+                        readonly
+                        type="text"
+                        id="TenSachMuon"
+                        name="TenSachMuon"
+                        value=""
+                        class="form-control"
+                        aria-label="Sizing example input"
+                        aria-describedby="inputGroup-sizing-sm"
+                        />
+                  </div>
+                </div>
+
+                 <div class="col-sm-6">
+                  <div class="input-group input-group-ml mb-3">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text" id="inputGroup-sizing-sm">
+                        Thể Loại
+                        </span>
+                      </div>
+                      <input
+                        readonly
+                        type="text"
+                        id="TenTheLoaiSM"
+                        name="TenTheLoaiSM"
+                        value=""
+                        class="form-control"
+                        aria-label="Sizing example input"
+                        aria-describedby="inputGroup-sizing-sm"
+                        />
+                  </div>
+                </div>
+
+                <div class="col-sm-6">
+                  <div class="input-group input-group-ml mb-3">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text" id="inputGroup-sizing-sm">
+                           Tác Giả
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        readonly
+                        id="TenTacGiaSM"
+                        name="TenTacGiaSM"
+                        value=""
+                        class="form-control"
+                        aria-label="Sizing example input"
+                        aria-describedby="inputGroup-sizing-sm"
+                        />
+                  </div>
+                </div>
+
+                <div class="col-sm-6">
+                  <div class="input-group input-group-ml mb-3">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text" id="inputGroup-sizing-sm">
+                           Nhà Xuất Bản
+                        </span>
+                      </div>
+                      <input
+                        readonly
+                        type="text"
+                        id="NhaXBSM"
+                        name="NhaXBSM"
+                        value=""
+                        class="form-control"
+                        aria-label="Sizing example input"
+                        aria-describedby="inputGroup-sizing-sm"
+                        />
+                  </div>
+                </div>
+
+                <div class="col-sm-6">
+                  <div class="input-group input-group-ml mb-3">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text" id="inputGroup-sizing-sm">
+                           Tình Trạng
+                        </span>
+                      </div>
+                      <input
+                        style="color: red; font-weight: bold"
+                        readonly
+                        type="text"
+                        id="TinhTrangSM"
+                        name="TinhTrangSM"
+                        value=""
+                        class="form-control"
+                        aria-label="Sizing example input"
+                        aria-describedby="inputGroup-sizing-sm"
+                        />
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="submit" formaction="" id="themsachmuon"  onclick="ThemSachMuonMoi()"
+                class="btn btn-primary">Thêm Sách Mượn
+              </button>
+            <button type="button" class="btn btn-light"
+               data-dismiss="modal">Thoát</button>
+            </div>
+         </div>
+      </div>
+  </div>

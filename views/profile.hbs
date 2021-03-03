@@ -1,0 +1,497 @@
+{{#section "title"}}
+  Tài khoản của tôi
+{{/section}}
+{{#section "css"}}
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.min.css"
+  />
+{{/section}}
+{{#section "js"}}
+  {{! Thông báo đẹp }}
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js"
+  ></script>
+  {{!-- cấu hình --}}
+  <script>
+    $(document).ready(function () {
+      $('#NgaySinh').datetimepicker({
+       format: 'd/m/Y',
+        timepicker: false,
+        mask: true,
+      });
+      $('#NgaySinh').val(`
+    {{NgaySinh}}
+    `.trim());
+      document.getElementById('GioiTinh').value= `
+    {{GioiTinh}}
+    `.trim();
+    });
+  </script>
+
+  {{!-- xử lý sự kiện post --}}
+   <script>
+      function isNumberKey(e) {
+        var charCode = (e.which) ? e.which : e.keyCode;
+        if (charCode > 31 && (charCode < 48 || charCode > 57))
+            return false;
+        return true;
+      }
+      $('#frmUpdateStaff').on('submit', function (e) {
+        e.preventDefault();
+        validate();
+      })
+      function validate(){
+        const HoTenNV = $('#HoTenNV').val();
+        const GioiTinh = $('#GioiTinh').val();
+        const DiaChi = $('#DiaChi').val();
+        const Sdt = $('#Sdt').val();
+        const NgaySinh = $('#NgaySinh').val();
+        var vnf_regex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/g;
+        var date_regex = /^([0-2][0-9]|(3)[0-1])(\/)(((0)[0-9])|((1)[0-2]))(\/)\d{4}$/i;
+        if(HoTenNV == ""){
+            Swal.fire({
+               title: 'Họ tên nhân viên không được rỗng.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+         }
+          if (!(date_regex.test(NgaySinh.trim()))) {
+            Swal.fire({
+               title: 'Ngày sinh không đúng định dạng',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+        }
+        if(DiaChi == ""){
+            Swal.fire({
+               title: 'Địa chỉ không được rỗng.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+        }
+         if(Sdt == ""){
+            Swal.fire({
+               title: 'Số điện thoại không được rỗng.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+         }
+         if (vnf_regex.test(Sdt) == false) {
+            Swal.fire({
+               title: 'Số điện thoại của bạn không đúng định dạng',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+        }
+        $.getJSON(`/profile/isValidPhone?Sdt=${Sdt}`, function (data) {
+          if (data){
+            Swal.fire({
+            title: 'Số điện thoại đã tồn tại',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+            });
+            return false;
+          }else{
+            $.getJSON(`/profile/updateStaff?HoTenNV=${HoTenNV}&GioiTinh=${GioiTinh}&DiaChi=${DiaChi}
+               &Sdt=${Sdt}&NgaySinh=${NgaySinh}`, function (data) {
+              if (data){
+                Swal.fire({
+                title: 'Cập nhật thành công',
+                icon: 'success',
+                iconHtml: '',
+                confirmButtonText: 'Trở về',
+                showCloseButton: true
+                });
+                return false;
+              }else{
+                Swal.fire({
+                  title: 'Câp nhật thất bại',
+                  icon: 'error',
+                  iconHtml: '',
+                  confirmButtonText: 'Trở về',
+                  showCloseButton: true
+                });
+                return false;
+              }
+            })
+          }
+        })
+        //$('#frmUpdateStaff').off('submit').submit();        
+        return false;
+      }
+   </script>
+   {{!-- Khúc này đổi mật khẩu --}}
+   <script>
+    $('#frmChangePassword').on('submit', function (e) {
+      e.preventDefault();
+      ValidatePassword();
+    })
+    function ValidatePassword(){
+      const MatKhau = $('#MatKhau').val();
+      const MatKhauMoi = $('#MatKhauMoi').val();
+      const XacNhanMatKhau = $('#XacNhanMatKhau').val();
+      if(MatKhau.length < 8){
+        Swal.fire({
+          title: 'Mật khẩu phải từ 8 ký tự',
+          icon: 'error',
+          iconHtml: '',
+          confirmButtonText: 'Trở về',
+          showCloseButton: true
+        });
+        return false;
+      }
+      if(MatKhauMoi.length < 8){
+        Swal.fire({
+          title: 'Mật khẩu mới phải từ 8 ký tự',
+          icon: 'error',
+          iconHtml: '',
+          confirmButtonText: 'Trở về',
+          showCloseButton: true
+        });
+        return false;
+      }
+      if(XacNhanMatKhau.length < 8){
+        Swal.fire({
+          title: 'Xác nhận mật khẩu mới không hợp lệ',
+          icon: 'error',
+          iconHtml: '',
+          confirmButtonText: 'Trở về',
+          showCloseButton: true
+        });
+        return false;
+      }
+      if(MatKhauMoi != XacNhanMatKhau){
+        Swal.fire({
+          title: 'Xác nhận mật khẩu mới không đúng.',
+          icon: 'error',
+          iconHtml: '',
+          confirmButtonText: 'Trở về',
+          showCloseButton: true
+        });
+        return false;
+      }
+      $.getJSON(`/profile/changePassWord/isValidPassWord?MatKhau=${MatKhau}`, function (data) {
+        if(!data){
+          Swal.fire({
+            title: 'Mật khẩu hiện tại không đúng.Vui lòng nhập lại',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }else{
+          if(MatKhauMoi != XacNhanMatKhau){
+            Swal.fire({
+              title: 'Xác nhận mật khẩu mới không đúng.',
+              icon: 'error',
+              iconHtml: '',
+              confirmButtonText: 'Trở về',
+              showCloseButton: true
+            });
+            return false;
+          }else{
+            $.getJSON(`/profile/changePassWord?MatKhau=${MatKhauMoi}`, function (response) {
+              if(response){
+                $("[data-dismiss=modal]").trigger({ type: "click" });
+                Swal.fire({
+                  title: 'Đổi mật khẩu thành công',
+                  icon: 'success',
+                  iconHtml: '',
+                  confirmButtonText: 'Trở về',
+                  showCloseButton: true
+                });
+                return false;
+              }else{
+                Swal.fire({
+                  title: 'Đổi mật khẩu thất bại',
+                  icon: 'error',
+                  iconHtml: '',
+                  confirmButtonText: 'Trở về',
+                  showCloseButton: true
+                });
+                return false;
+              }
+            });
+          }
+        }
+      })
+      return false;
+    }
+   </script>
+{{/section}}
+<div class="container" style="margin-top: 100px;">
+  <h1 class="text-center mb-5">
+    Thông tin tài khoản
+  </h1>
+  <form method="POST" id="frmUpdateStaff" action="">
+    <div class="row" style="margin-bottom: 20px;">
+      <div class="col-sm-6">
+        <div class="input-group input-group-ml mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroup-sizing-sm">
+              Họ Và Tên
+            </span>
+          </div>
+          <input
+            type="text"
+            value="{{HoTenNV}}"
+            id="HoTenNV"
+            name="HoTenNV"
+            value=""
+            class="form-control"
+            aria-label="Sizing example input"
+            aria-describedby="inputGroup-sizing-sm"
+          />
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="input-group input-group-ml mb-0">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="inputGroupSelect01">
+                Giới Tính
+              </label>
+            </div>
+            <select class="custom-select" id="GioiTinh" name="GioiTinh">
+              <option selected value="Nam">
+                Nam
+              </option>
+              <option value="Nữ">
+                Nữ
+              </option>
+              <option value="Khác">
+                Khác
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="input-group input-group-ml mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroup-sizing-sm">
+              Địa Chỉ
+            </span>
+          </div>
+          <input
+            type="text"
+            id="DiaChi"
+            name="DiaChi"
+            value="{{DiaChi}}"
+            class="form-control"
+            aria-label="Sizing example input"
+            aria-describedby="inputGroup-sizing-sm"
+          />
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="input-group input-group-ml mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroup-sizing-sm">
+              Số Điện Thoại
+            </span>
+          </div>
+          <input
+            type="text"
+            id="Sdt"
+            name="Sdt"
+            value="{{Sdt}}"
+            class="form-control"
+            onkeypress="return isNumberKey(event)"
+            aria-label="Sizing example input"
+            aria-describedby="inputGroup-sizing-sm"
+          />
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="input-group input-group-ml mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroup-sizing-sm">
+              Ngày Sinh
+            </span>
+          </div>
+          <input
+            type="text"
+            id="NgaySinh"
+            name="NgaySinh"
+            placeholder="{{NgaySinh}}"
+            value="{{NgaySinh}}"
+            class="form-control"
+            aria-label="Sizing example input"
+            aria-describedby="inputGroup-sizing-sm"
+          />
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="input-group input-group-ml mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroup-sizing-sm">
+              Bằng Cấp
+            </span>
+          </div>
+          <input
+            readonly
+            type="text"
+            id="TenBangCap"
+            name="TenBangCap"
+            value="{{TenBangCap}}"
+            class="form-control"
+            aria-label="Sizing example input"
+            aria-describedby="inputGroup-sizing-sm"
+          />
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="input-group input-group-ml mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroup-sizing-sm">
+              Chức Vụ
+            </span>
+          </div>
+          <input
+            readonly
+            type="text"
+            id="TenChucVu"
+            name="TenChucVu"
+            value="{{TenChucVu}}"
+            class="form-control"
+            aria-label="Sizing example input"
+            aria-describedby="inputGroup-sizing-sm"
+          />
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="input-group input-group-ml mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="inputGroup-sizing-sm">
+              Bộ Phận
+            </span>
+          </div>
+          <input
+            readonly
+            type="text"
+            id="TenBoPhan"
+            name="TenBoPhan"
+            value="{{TenBoPhan}}"
+            class="form-control"
+            aria-label="Sizing example input"
+            aria-describedby="inputGroup-sizing-sm"
+          />
+        </div>
+      </div>
+    </div>
+    <div class="row" style="margin-bottom: 40px;">
+      <div class="col-sm-6">
+        <a
+          href="javascript;;"
+          class="btn btn-danger w-100 text-white font-weight-bold mb-3"
+            data-toggle="modal"
+            data-target="#changePassWord"
+        >
+          <i class="fas fa-key"></i>
+          ĐỔI MẬT KHẨU
+        </a>
+      </div>
+      <div class="col-sm-6">
+        <button
+          type="submit"
+          class="btn btn-primary w-100 mr-2 text-white font-weight-bold"
+        >
+          <i class="fa fa-plus"></i>
+          CẬP NHẬT TÀI KHOẢN
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade centerModal" id="changePassWord" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+         <div class="modal-content">
+            <form method="POST" form-action="" id="frmChangePassword">
+               <div class="modal-header">
+                  <h4 class="modal-title" id="exampleModalLabel">Đổi mật khẩu</h4>
+                  <button type="button" class="close" data-dismiss="modal"
+                     aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                  </button>
+               </div>
+               <div class="modal-body">
+                <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                      Mật khẩu hiện tại
+                    </span>
+                  </div>
+                  <input
+                    type="password"
+                    id="MatKhau"
+                    name="MatKhau"
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                  />
+                </div>
+                <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                      Mật khẩu mới
+                    </span>
+                  </div>
+                  <input
+                    type="password"
+                    id="MatKhauMoi"
+                    name="MatKhauMoi"
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                  />
+                </div>
+                <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                      Nhập lại mật khẩu mới
+                    </span>
+                  </div>
+                  <input
+                    type="password"
+                    id="XacNhanMatKhau"
+                    name="XacNhanMatKhau"
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                  />
+                </div>
+               </div>
+               <div class="modal-footer">
+                  <button type="submit" 
+                     class="btn btn-primary">Đổi Mật khẩu
+                  </button>
+            </form>
+            <button type="button" class="btn btn-light"
+               data-dismiss="modal">Thoát</button>
+            </div>
+         </div>
+      </div>
+   </div>
+</div>

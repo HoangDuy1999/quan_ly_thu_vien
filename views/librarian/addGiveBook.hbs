@@ -1,0 +1,602 @@
+{{#section "title"}}
+Thêm phiếu trả sách
+{{/section}}
+
+{{#section 'css'}}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.min.css">
+  <style>
+     thead, td{
+      text-align: center;;
+   }
+   #tblBook input {
+      width: 100%;        
+      box-sizing: border-box;
+   }
+  </style>
+{{/section}}
+
+{{#section 'js'}}
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js"></script>
+   {{!-- Thông báo đẹp --}}
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+   {{!-- import to use datatable --}}
+  {{!-- <script src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script> --}}
+   {{!-- Biến toàn cục --}}
+   <script>
+     var TIENPHATKYNAY = 0;
+     var TIENNO = 0;
+     var TONGNO = 0;
+     var MADOCGIA = "";
+   </script>
+   {{!-- Khúc này format ngày mượn với ngày hết hạn --}}
+   <script>
+      Number.prototype.padLeft = function(base,chr){
+         var  len = (String(base || 10).length - String(this).length)+1;
+         return len > 0? new Array(len).join(chr || '0')+this : this;
+      }
+      function leapYear(year)
+      {
+         return ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0);
+      }
+      function formatDate(d){
+         dformat = [(d.getMonth()+1).padLeft(),
+               d.getDate().padLeft(),
+               d.getFullYear()].join('/');
+         var arr = dformat.split('/');
+         dformat = arr[1] +"/"+ arr[0]+"/" + arr[2];
+         return dformat;
+      }
+      const today = new Date();
+      $("#NgayTra").val(formatDate(today));
+   </script>
+   
+    {{!-- Khúc này lấy thông tin và cập nhật giá trị cho các trường --}}
+   <script>
+      function process(date){
+        var parts = date.split("/");
+        return new Date(parts[2], parts[1] - 1, parts[0]);
+      }
+      function LayThongTinMaPhieuMuon(){
+       let MaPM = $("#MaPM").val().trim();
+       const HoTenDG = $("#HoTenDG").val().trim();
+       const NgayTra = $("#NgayTra").val().trim();
+       if(MaPM.length < 1 || MaPM == ""){
+        Swal.fire({
+              title: 'Mã phiếu mượn sách không hợp lệ',
+              icon: 'error',
+              iconHtml: '',
+              confirmButtonText: 'Trở về',
+              showCloseButton: true
+        });
+        return false;
+       }
+
+      // chuyển về mã đọc giả gốc
+      MaPM = MaPM.split("-");
+      $("#HoTenDG").val(MaPM[1].trim());
+      // lấy dữ liệu đổ vô form input
+      // lấy dữ liệu đổ vô table
+      $.getJSON(`/index/give_book/getInfoDetailCardBorrowBook?MaPM=${MaPM[0]}`, function (data) {
+        if(data == false) {
+          alert("run");
+          Swal.fire({
+            title: 'Hệ thống không tìm được dữ liệu của phiếu mượn này. Vui lòng thử lại hoặc liên hệ quản trị viên để trợ giúp',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }else{
+          // xóa giữ liệu cữ
+          setTimeout(function(){ 
+            $('#tblBook > tbody> tr').detach();
+          }, 10);
+          setTimeout(function(){
+            // tính số ngày trễ tiền phạt tiền nợ, tổng tiền phạt 
+            // format: số ngày trễ - tiền phạt kỳ này - tiền nợ - tổng tiền phạt - tổng nợ
+             $.getJSON(`/index/give_book/calculation?MaPM=${MaPM[0]}`, function (data) {
+               if(data == false){
+                Swal.fire({
+                  title: 'Hệ Thông không lấy được dữ liệu. Vui lòng thử lại học tải lại trang.',
+                  icon: 'error',
+                  iconHtml: '',
+                  confirmButtonText: 'Trở về',
+                  showCloseButton: true
+                });
+                return false;
+               }else{
+                 let dulieu = data.split("-");
+                 TIENPHATKYNAY = parseInt(dulieu[1]);
+                 TIENNO = parseInt(dulieu[2]);
+                 TONGNO = parseInt(dulieu[3]);
+                 MADOCGIA = dulieu[4].trim();
+                 dulieu[1] = TIENPHATKYNAY.toLocaleString("it-IT", {
+                    style: "currency",
+                    currency: "VND",
+                  });
+                  dulieu[2] = TIENNO.toLocaleString("it-IT", {
+                    style: "currency",
+                    currency: "VND",
+                  });
+                  dulieu[3] = TONGNO.toLocaleString("it-IT", {
+                    style: "currency",
+                    currency: "VND",
+                  });
+                 $("#SoNgayTraTre").val(dulieu[0]);
+                 $("#TienPhatKyNay").val(dulieu[1]);
+                 $("#TienNo").val(dulieu[2]);
+                 $("#TongNo").val(dulieu[3]);
+               }
+             });
+            for(const val of data){
+              let moneyTemp = val.TienPhat.toLocaleString("it-IT", {
+                  style: "currency",
+                  currency: "VND",
+                });
+              if(val.NutMatSach){
+                $('#tblBook > tbody:last').append(`
+                  <tr> 
+                    <td class="STT">${val.STT}</td>
+                    <td id="MaSach">${val.MaSach}</td>
+                    <td>${val.TenSach}</td>
+                    <td>${val.NgayMuon}</td>
+                    <td>${val.SoNgayMuon}</td>
+                    <td>${moneyTemp}</td>
+                    <td>${val.LyDo}</td>
+                    <td> 
+                      <a class="btn btn-danger btn-remove-tr" title="Mất sách" >
+                        <i class="fas fa-book-medical" style="color:white"> MẤT SÁCH</i>
+                      </a>
+                    </td>
+                    <td hidden>
+                      ${val.GiaTien}
+                    </td>
+                  </tr>
+                `);
+              }else{
+                let moneyTemp = val.TienPhat.toLocaleString("it-IT", {
+                  style: "currency",
+                  currency: "VND",
+                });
+                $('#tblBook > tbody:last').append(`
+                  <tr> 
+                    <td class="STT">${val.STT}</td>
+                    <td>${val.MaSach}</td>
+                    <td>${val.TenSach}</td>
+                    <td>${val.NgayMuon}</td>
+                    <td>${val.SoNgayMuon}</td>
+                    <td>${moneyTemp}</td>
+                    <td>${val.LyDo}</td>
+                    <td> 
+                      <a class="btn btn-danger btn-remove-tr" role="button" style="color:white; pointer-events: none; opacity: 0.5;cursor: default;" title="Mất sách">
+                        <i class="fas fa-book-medical"> MẤT SÁCH</i>
+                      </a>
+                    </td>
+                  </tr>
+                `);
+              }
+            }
+            $('#btnAdd').prop('disabled', false);
+          },100);
+        }
+      });
+     }
+   </script>
+
+    {{!-- Khúc này hện modal mất sách --}}
+    <script>
+      $('table').on('click', '.btn-remove-tr', function(e) {
+        var $row = $(this).closest("tr");
+        console.log($row.find("#MaSach").text());
+        $("#idBook").text($row.find("#MaSach").text());
+        $('#popupMissBook').modal('show');
+        return false;
+      });
+    </script>
+
+    {{!-- Khúc này xử lý mất sách --}}
+    <script>
+      function XuLyMatSach(){
+        $('#popupMissBook').modal('hide');
+        const MaPM = $("#MaPM").val().trim();
+        const MaSach = $("#idBook").text();
+    
+        var oTable = document.getElementById('tblBook');
+        //gets rows of table
+        var rowLength = oTable.rows.length;
+        var table = $('#tblBook > tbody');
+          table.find('tr').each(function (i, el) {
+            var $tds = $(this).find('td');
+            if($tds.eq(1).text().trim() == MaSach) {
+              let tp = parseInt($tds.eq(8).text().trim());
+              TIENPHATKYNAY = TIENPHATKYNAY + tp;
+              TONGNO = TONGNO + tp;
+              TIENNO = TIENNO + tp;
+              tp = tp.toLocaleString("it-IT", {
+                style: "currency",
+                currency: "VND",
+              });
+              oTable.rows[i + 1].cells[5].innerHTML = tp;
+              oTable.rows[i + 1].cells[6].innerHTML = "Mất sách";
+              oTable.rows[i + 1].cells[7].innerHTML = `<a class="btn btn-danger btn-remove-tr" role="button" style="color:white; pointer-events: none; opacity: 0.5;cursor: default;" title="Mất sách">
+                        <i class="fas fa-book-medical"> MẤT SÁCH</i>
+                      </a>`;
+              // cập nhật lại nợ
+              
+              tpknnew = TIENPHATKYNAY.toLocaleString('it-IT', {style : 'currency', currency : 'VND'});
+              tiennonew = TIENNO.toLocaleString('it-IT', {style : 'currency', currency : 'VND'});
+              tongnonew = TONGNO.toLocaleString('it-IT', {style : 'currency', currency : 'VND'});
+              $("#TienPhatKyNay").val(tpknnew);
+              $("#TienNo").val(tiennonew);
+              $("#TongNo").val(tongnonew);
+            }
+        });
+      }
+    </script>
+
+    {{!-- khúc này hiện nút thêm mới --}}
+    <script>
+      document.getElementById('element').onclick = function(e){
+        //console.log(sosachdm);
+        var oTable = document.getElementById('tblBook');
+        //gets rows of table
+        let rows = oTable.rows.length;
+        console.log(rows);
+        if(parseInt(rows) > 1){
+          $('#btnAdd').prop('disabled', false);
+          $('#message').hide();
+        }else{
+          $('#message').show();
+          $('#btnAdd').prop('disabled', true);
+        }
+        
+      }
+    </script>
+
+    {{!-- Thêm phiếu trả sách --}}
+    <script>
+      function ThemPhieuTraMoi(){
+        let MaPM = $("#MaPM").val().trim();
+        MaPM = MaPM.split(" - ");
+        MaPM = MaPM[0];
+        const NgayTra = $("#NgayTra").val().trim();
+        let SoNgayTraTre = $("#SoNgayTraTre").val().trim();
+        SoNgayTraTre = SoNgayTraTre.split(" ");
+        SoNgayTraTre = SoNgayTraTre[0];
+        console.log("=============");
+        console.log(MaPM);
+        console.log(SoNgayTraTre);
+        console.log(NgayTra);
+        console.log(TIENPHATKYNAY);
+        console.log(TIENNO);
+        console.log(MADOCGIA);
+        let aBooks = [];
+        if(SoNgayTraTre == ""){
+          Swal.fire({
+            title: 'Mã độc giả không được rỗng',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+        if(MaPM == ""){
+          Swal.fire({
+            title: 'Ngày mượn không được rỗng',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+        if(NgayTra == ""){
+          Swal.fire({
+            title: 'Ngày hết hạn không được rỗng',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+
+        rows = $('#tblBook >tbody >tr').length;
+        if(parseInt(rows) < 1){
+          Swal.fire({
+            title: 'Thêm phiếu trả sách không thành công.',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        };
+        // Khúc này lấy dữ liệu datatable để tạo chi tiết phiếu mượn
+        var table = $('#tblBook >tbody');
+          table.find('tr').each(function (i, el) {
+            var $tds = $(this).find('td');
+            let str = "";
+            let tam = $tds.eq(5).text().trim().split(" ");
+            if(parseInt(tam) > 0){
+              str += $tds.eq(1).text().trim() + "==" + $tds.eq(2).text().trim() + "==" + $tds.eq(3).text().trim() + "==" + $tds.eq(4).text().trim() + "==" + $tds.eq(8).text().trim();
+              aBooks.push(str);
+            }else{
+              str += $tds.eq(1).text().trim() + "==" + $tds.eq(2).text().trim() + "==" + $tds.eq(3).text().trim() + "==" + $tds.eq(4).text().trim() + "==" + "0";
+              aBooks.push(str);
+            }
+          });
+        if(aBooks.length < 1){
+          Swal.fire({
+            title: 'Thêm phiếu trả sách không thành công',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+        console.log(aBooks);
+        $.getJSON(`/index/give_book/add/post?MaPM=${MaPM}&SoNgayTraTre=${SoNgayTraTre}&NgayTra=${NgayTra}&TIENPHATKYNAY=${TIENPHATKYNAY}&TIENNO=${TIENNO}&MaDocGia=${MADOCGIA}&aBooks=${aBooks}`, function (data) {
+          if(data){
+            Swal.fire({
+              title: 'Thêm phiếu trả thành công',
+              icon: 'success',
+              iconHtml: '',
+              confirmButtonText: 'Trở về',
+              showCloseButton: true
+            }).then(function() {
+                window.location = "http://localhost:3000/index/give_book";
+            });
+          }else{
+            Swal.fire({
+              title: 'Thêm phiếu trả không thành công',
+              icon: 'error',
+              iconHtml: '',
+              confirmButtonText: 'Trở về',
+              showCloseButton: true 
+            });
+          }
+        });
+      }
+
+    </script>
+{{/section}}
+<div id="element" class="container">
+    <h1 style="margin-top: 100px; margin-bottom: 50px; text-align: center">
+    THÊM PHIẾU TRẢ SÁCH
+    </h1> 
+   <div class="row" style="margin-bottom: 20px;">
+      <div class="col-sm-12">
+         <div class="input-group input-group-ml mb-0">
+            <div class="input-group mb-3">
+               <div class="input-group-prepend">
+                  <label class="input-group-text" for="inputGroupSelect01">Phiếu Mượn</label>
+               </div>
+                <input list="dspm" value="" onblur="LayThongTinMaPhieuMuon()" placeholder="nhập mã phiếu mượn, mã độc giả hay số cmnd/cccd để tìm phiếu mượn" id="MaPM" class="form-control">
+                <datalist id="dspm">
+                  {{#each this.listCardBorrowBook}}
+                    <option value="{{MaPM}} - {{HoTenDG}} - {{CMND_CCCD}}">
+                  {{/each}}
+                </datalist>  
+            </div>
+         </div>
+      </div>
+      {{!-- khúc này đóng khuôn phiếu trả --}}
+      <div class=" col-sm-12 card" style="margin-bottom: 18px; padding: 0">
+        <div class=" col-sm-12 card-header">
+          <b>PHIẾU TRẢ SÁCH</b>
+        </div>
+        <div class="col-sm-12 card-body">
+          {{!-- <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+          <a href="#!" class="btn btn-primary">Go somewhere</a> --}}
+          <div class="row">
+           <div class="col-sm-6">
+              <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                      Họ Tên Độc Giả
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    id="HoTenDG"
+                    readonly
+                    name="HoTenDG"
+                    value=""
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                    />
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                      Ngày Trả
+                    </span>
+                  </div>
+                  <input
+                    readonly
+                    type="text"
+                    id="NgayTra"
+                    name="NgayTra"
+                    value=""
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                    />
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                        Số Ngày Trả Trễ
+                    </span>
+                  </div>
+                  <input
+                    readonly
+                    type="text"
+                    id="SoNgayTraTre"
+                    name="SoNgayTraTre"
+                    value=""
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                  />
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                        Tiền Phạt Kỳ Này
+                    </span>
+                  </div>
+                  <input
+                    style="color: red; font-weight: bold;"
+                    readonly
+                    type="text"
+                    id="TienPhatKyNay"
+                    name="TienPhatKyNay"
+                    value=""
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                  />
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                        Tiền Nợ Kỳ Này
+                    </span>
+                  </div>
+                  <input
+                    readonly
+                    style="color:red; font-weight: bold"
+                    type="text"
+                    id="TienNo"
+                    name="TienNo"
+                    value=""
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                  />
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm" title="Tổng tiền nợ chưa trả trong các kỳ mượn sách">
+                        Tổng Nợ Các Kỳ
+                    </span>
+                  </div>
+                  <input
+                    readonly
+                    style="color:red; font-weight: bold"
+                    type="text"
+                    id="TongNo"
+                    name="TongNo"
+                    value=""
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                  />
+              </div>
+            </div>
+            <div class="col-sm-12">
+              <h2 class="text-center mb-3 mt-1"> Thông Tin Sách Mượn</h2>
+            </div>
+            <div class="col-sm-12 table-responsive">
+              <table id="tblBook" name="tblBook" class="table table-bordered"  style="width: 100%; margin-bottom: 20px">
+                  <thead>
+                    <tr>
+                        <th>
+                          STT
+                        </th>
+                        <th>
+                          Mã Sách
+                        </th>
+                        <th>
+                          Tên Sách
+                        </th>
+                        <th>
+                          Ngày Mượn
+                        </th>
+                        <th>
+                          Số Ngày Mượn
+                        </th>
+                        <th>
+                          Tiền Phạt
+                        </th>
+                        <th>
+                          Lý Do
+                        </th>
+                        <th>
+                          Thao Tác
+                        </th>
+                        <th hidden>
+                          Giá Tiền
+                        </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+     
+      
+    </div>
+      <div class="row" style="margin-bottom: 40px;">
+        <div class="col-sm-6">
+          <a href="/index/give_book" class="btn btn-secondary w-100 text-white font-weight-bold mb-3">
+            <i class="fas fa-arrow-left"></i> TRỞ VỀ
+          </a>
+        </div>
+        <div class="col-sm-6">
+            <button disabled onclick="ThemPhieuTraMoi()" type="submit" id="btnAdd" class="btn btn-primary w-100 mr-2 text-white font-weight-bold"><i class="fa fa-plus"></i> THÊM MỚI</button>
+        </div>
+      </div>
+  </div>
+</div>
+
+
+  {{!-- modal mất sách --}}
+  <div class="modal fade centerModal" id="popupMissBook" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+         <div class="modal-content">
+               <div class="modal-header">
+                  <h4 class="modal-title" id="exampleModalLabel">MẤT SÁCH</h4>
+                  <button type="button" class="close" data-dismiss="modal"
+                     aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                  </button>
+               </div>
+               <div class="modal-body">
+                  <input hidden name="madocgia" type="text" id="madocgia" />
+                  <input hidden name="rIndex" type="text" id="rIndex" />
+                  <p style="font-size: 20px;">
+                     <b> Mã sách: 
+                     <span style="color:red" id="idBook"></span>
+                     </b> bị độc giả làm mất. Chọn <b>"đồng ý"</b> để xác nhận.
+                  </p>
+               </div>
+               <div class="modal-footer">
+                  <button type="submit" onclick="XuLyMatSach()"
+                     class="btn btn-danger">Đông ý
+                  </button>
+            <button type="button" class="btn btn-light"
+               data-dismiss="modal">Thoát</button>
+            </div>
+         </div>
+      </div>
+  </div>

@@ -1,0 +1,345 @@
+{{#section "title"}}
+Thêm phiếu thanh lý sách
+{{/section}}
+
+{{#section 'css'}}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.min.css">
+  <style>
+     thead, td{
+      text-align: center;;
+   }
+   #tblBook input {
+      width: 100%;        
+      box-sizing: border-box;
+   }
+  </style>
+{{/section}}
+
+{{#section 'js'}}
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js"></script>
+   {{!-- Thông báo đẹp --}}
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+   {{!-- Khúc này format ngày mượn với ngày hết hạn --}}
+   <script>
+      Number.prototype.padLeft = function(base,chr){
+         var  len = (String(base || 10).length - String(this).length)+1;
+         return len > 0? new Array(len).join(chr || '0')+this : this;
+      }
+      function leapYear(year)
+      {
+         return ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0);
+      }
+      function formatDate(d){
+         dformat = [(d.getMonth()+1).padLeft(),
+               d.getDate().padLeft(),
+               d.getFullYear()].join('/');
+         var arr = dformat.split('/');
+         dformat = arr[1] +"/"+ arr[0]+"/" + arr[2];
+         return dformat;
+      }
+      const today = new Date();
+      $("#NgayThanhLy").val(formatDate(today));
+   </script>
+
+    {{!-- Khúc này thêm sách mới vô bảng  --}}
+    <script>
+      function ThemSachThanhLy(){
+        let rows = $('#tblBook >tbody >tr').length;
+        const STT = parseInt(rows) + 1;
+        if($('#Sach').val().trim().length < 6){
+          return false;
+        }
+        const TTSach = $('#Sach').val().trim().split(" - ");
+        if(TTSach.length < 4){
+          return false;
+        }
+        const MaSach = TTSach[0].trim();
+        const TenSach = TTSach[1].trim();
+        const SoLuong = parseInt(TTSach[3].trim());
+        const SoLuongMat = parseInt($("#SoLuong").val().trim());
+        if(SoLuong < SoLuongMat){
+           Swal.fire({
+            title: 'Số lượng sách mất không được phép lớn hơn số lượng hiện có',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+        let notRun = false;
+        var table = $('#tblBook > tbody');
+        table.find('tr').each(function (i, el) {
+            var $tds = $(this).find('td');
+            const _MaSach = $tds.eq(1).text().trim();
+            if(MaSach == _MaSach){
+              Swal.fire({
+                title: 'Mã sách này đã có trong bảng thông tin sách thanh lý',
+                icon: 'error',
+                iconHtml: '',
+                confirmButtonText: 'Trở về',
+                showCloseButton: true
+              });
+              notRun = true;
+              return false;
+            }else{
+              notRun = false;
+            }
+        });
+        if(notRun == false){
+          $('#tblBook > tbody:last').append(`
+            <tr> 
+                <td class="STT">${STT}</td>
+                <td>${MaSach}</td>
+                <td>${TenSach}</td>
+                <td>${SoLuongMat}</td>
+                <td> 
+                  <a class="btn btn-danger btn-remove-tr" title="Xóa Sách" style="font-weight: bold;">
+                    <i class="fa fa-trash" style="color:white"></i>
+                  </a>
+                </td>
+            </tr>
+            `);
+        }
+        $("#Sach").val("");
+        rows = $('#tblBook >tbody >tr').length;
+        if(parseInt(rows) > 0){
+          $('#LyDoThanhLy').prop('disabled', true);
+          $('#message').hide();
+        }else{
+          $('#LyDoThanhLy').prop('disabled', false);
+          $('#message').show();
+        }
+      }
+    </script>
+
+    {{!-- Khúc này xóa sách mượn --}}
+    <script>
+      $('table').on('click', '.btn-remove-tr', function(e) {
+        if($('table >tbody >tr').length > 1) {
+            $(this).closest('tr').remove();
+            $('td.STT').text(function (i) {
+              return i + 1;
+            });
+              
+        }else{
+          $(this).closest('tr').remove();
+        }
+        rows = $('#tblBook >tbody >tr').length;
+        if(parseInt(rows) > 0){
+          $('#LyDoThanhLy').prop('disabled', true);
+          $('#message').hide();
+        }else{
+          $('#LyDoThanhLy').prop('disabled', false);
+          $('#message').show();
+        }
+        return false;
+      });
+    </script>
+   
+    {{!-- Thêm phiếu trả sách --}}
+    <script>
+      function ThemPhieuThanhLyMoi(){
+        const NgayThanhLy = $("#NgayThanhLy").val().trim();
+        const LyDoThanhLy = $("#LyDoThanhLy").val().trim();
+        console.log(NgayThanhLy);
+        console.log(LyDoThanhLy);
+        let aBooks = [];
+        if(NgayThanhLy == ""){
+          Swal.fire({
+            title: 'Ngày thanh lý không hợp lệ',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+        if(LyDoThanhLy == ""){
+          Swal.fire({
+            title: 'Lý do thanh lý không hợp lệ',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+        // Khúc này lấy dữ liệu datatable
+        var table = $('#tblBook >tbody');
+          let tds = "";
+          table.find('tr').each(function (i, el) {
+            tds = $(this).find('td');
+            aBooks.push(`${tds.eq(1).text().trim()}-${tds.eq(3).text().trim()}`);
+        });
+        if(aBooks.length < 1){
+          Swal.fire({
+            title: 'Không lấy được thông tin sách thanh lý. Vui lòng thử lại',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+        $.getJSON(`/index/stocker/book_liquidation/add/post?LyDoThanhLy=${LyDoThanhLy}&NgayThanhLy=${NgayThanhLy}&aBook=${aBooks}`, function (data) {
+          if(data){
+            Swal.fire({
+              title: 'Thêm phiếu thanh lý sách thành công',
+              icon: 'success',
+              iconHtml: '',
+              confirmButtonText: 'Trở về',
+              showCloseButton: true
+            }).then(function() {
+                window.location = "http://localhost:3000/index/stocker/book_liquidation";
+            });
+          }else{
+            Swal.fire({
+              title: 'Thêm phiếu thanh lý sách không thành công',
+              icon: 'error',
+              iconHtml: '',
+              confirmButtonText: 'Trở về',
+              showCloseButton: true 
+            });
+          }
+        });
+      }
+
+    </script>
+{{/section}}
+<div id="element" class="container">
+    <h1 style="margin-top: 100px; margin-bottom: 50px; text-align: center">
+    THÊM PHIẾU THANH LÝ SÁCH
+    </h1> 
+   <div class="row" style="margin-bottom: 20px;">
+      {{!-- khúc này đóng khuôn phiếu trả --}}
+      <div class=" col-sm-12 card" style="margin-bottom: 18px; padding: 0">
+        <div class=" col-sm-12 card-header">
+          <b>PHIẾU THANH LÝ SÁCH</b>
+        </div>
+        <div class="col-sm-12 card-body">
+          {{!-- <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+          <a href="#!" class="btn btn-primary">Go somewhere</a> --}}
+          <div class="row">
+           <div class="col-sm-6">
+              <div class="input-group input-group-ml mb-0">
+                <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                      <label class="input-group-text" for="inputGroupSelect01">Lý Do Thanh Lý</label>
+                  </div>
+                  <select class="custom-select" id="LyDoThanhLy" name="LyDoThanhLy">
+                      {{#each infoReason}}
+                        <option value="{{MaLyDoThanhLy}}">{{MoTa}}</option>
+                      {{/each}}
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                      Ngày Thanh Lý
+                    </span>
+                  </div>
+                  <input
+                    readonly
+                    type="text"
+                    id="NgayThanhLy"
+                    name="NgayThanhLy"
+                    value=""
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                    />
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="input-group input-group-ml mb-0">
+                <div class="input-group mb-3">
+                  <div class="input-group-prepend">
+                      <label class="input-group-text" for="inputGroupSelect01">Sách</label>
+                  </div>
+                    <input list="dsSach" value="" placeholder="nhập mã sách hoặc tên sách" id="Sach" class="form-control">
+                    <datalist id="dsSach">
+                      {{#each this.listBook}}
+                        <option value="{{MaSach}} - {{TenSach}} - {{TenTacGia}} - {{SoLuong}} cuốn">
+                      {{/each}}
+                    </datalist>  
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-4">
+              <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                        Số Lượng
+                    </span>
+                  </div>
+                  <input
+                    type="number"
+                    min=1
+                    id="SoLuong"
+                    name="SoLuong"
+                    value="1"
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                  />
+              </div>
+            </div>
+            <div class="col-sm-2">
+                <button type="submit" id="btnAddBook" onclick="ThemSachThanhLy()" class="btn btn-primary w-100 mr-2 text-white font-weight-bold"><i class="fa fa-plus"></i> THÊM SÁCH</button>
+            </div>
+            <div class = "col-sm-12 text-center mt-2 mb-2">
+              <h4>THÔNG TIN SÁCH THANH LÝ</h4>
+            </div>
+             <div class="col-sm-12">
+                <table id="tblBook" name="tblBook" class="table table-bordered"  style="width: 100%; margin-bottom: 20px">
+                    <thead>
+                      <tr>
+                          <th>
+                            STT
+                          </th>
+                          <th>
+                            Mã Sách
+                          </th>
+                          <th>
+                            Tên Sách
+                          </th>
+                           <th>
+                             Số Lượng Sách Mất
+                          </th>
+                          <th style="max-width: 100px; min-width: 100px">
+                            Thao Tác
+                          </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+              </div>
+              <div class="col-sm-12 text-center">
+                <p style="font-weight: bold;" id="message">Chưa có dữ liệu ghi nhận sách mất</p>
+              </div>
+          </div>
+        </div>
+
+      </div>
+     
+      
+    </div>
+      <div class="row" style="margin-bottom: 40px;">
+        <div class="col-sm-6">
+          <a href="/index/stocker/book_liquidation" class="btn btn-secondary w-100 text-white font-weight-bold mb-3">
+            <i class="fas fa-arrow-left"></i> TRỞ VỀ
+          </a>
+        </div>
+        <div class="col-sm-6">
+            <button onclick="ThemPhieuThanhLyMoi()" type="submit" id="btnAdd" class="btn btn-primary w-100 mr-2 text-white font-weight-bold"><i class="fa fa-plus"></i> THÊM MỚI</button>
+        </div>
+      </div>
+  </div>
+</div>
+
+

@@ -1,0 +1,318 @@
+{{#section "title"}}
+Thêm phiếu thu tiền phạt
+{{/section}}
+
+{{#section 'css'}}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.min.css">
+  <style>
+     thead, td{
+      text-align: center;;
+   }
+   #tblBook input {
+      width: 100%;        
+      box-sizing: border-box;
+   }
+  </style>
+{{/section}}
+
+{{#section 'js'}}
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js"></script>
+   {{!-- Thông báo đẹp --}}
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+   {{!-- import to use datatable --}}
+  {{!-- <script src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script> --}}
+   {{!-- Biến toàn cục --}}
+   <script>
+     var TienThu = 0;
+     var TIENNO = 0;
+     var TONGNO = 0;
+     var MADOCGIA = "";
+     var MaPT = "";
+   </script>
+   {{!-- Khúc này format ngày mượn với ngày hết hạn --}}
+   <script>
+      Number.prototype.padLeft = function(base,chr){
+         var  len = (String(base || 10).length - String(this).length)+1;
+         return len > 0? new Array(len).join(chr || '0')+this : this;
+      }
+      function leapYear(year)
+      {
+         return ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0);
+      }
+      function formatDate(d){
+         dformat = [(d.getMonth()+1).padLeft(),
+               d.getDate().padLeft(),
+               d.getFullYear()].join('/');
+         var arr = dformat.split('/');
+         dformat = arr[1] +"/"+ arr[0]+"/" + arr[2];
+         return dformat;
+      }
+      const today = new Date();
+      $("#NgayThu").val(formatDate(today));
+   </script>
+   
+    {{!-- Khúc này lấy thông tin và cập nhật giá trị cho các trường --}}
+   <script>
+      function process(date){
+        var parts = date.split("/");
+        return new Date(parts[2], parts[1] - 1, parts[0]);
+      }
+      function LayThongTinPhieuTra(){
+       MaPT = $("#MaPT").val().trim();
+       const HoTenDG = $("#HoTenDG").val().trim();
+       const NgayThu = $("#NgayThu").val().trim();
+       if(MaPT.length < 1 || MaPT == ""){
+        Swal.fire({
+              title: 'Mã phiếu mượn sách không hợp lệ',
+              icon: 'error',
+              iconHtml: '',
+              confirmButtonText: 'Trở về',
+              showCloseButton: true
+        });
+        return false;
+       }
+
+      // chuyển về mã đọc giả gốc
+      MaPT = MaPT.split("-");
+      $("#HoTenDG").val(MaPT[1].trim());
+      let temp =$("#" + MaPT[0].trim() + "").val();
+      temp = parseInt(temp).toLocaleString("it-IT", {
+                  style: "currency",
+                  currency: "VND",
+                });
+      $("#TienNo").val(temp);
+      $("#TienThu").val(temp);
+      MaPT = MaPT[0].trim();
+     }
+   </script>
+
+    {{!-- khúc này hiện nút thêm mới --}}
+    <script>
+      document.getElementById('element').onclick = function(e){
+        if($("#HoTenDG").val() != ""){
+          $('#btnAdd').prop('disabled', false);
+        }
+        
+      }
+    </script>
+
+    {{!-- Thêm phiếu trả sách --}}
+    <script>
+      function ThemPhieuTraMoi(){
+        const NgayThu = $("#NgayThu").val().trim();
+        let TienThu =$("#" + MaPT.trim() + "").val()
+        let aBooks = [];
+        if(TienThu == ""){
+          Swal.fire({
+            title: 'Mã độc giả không được rỗng',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+        if(MaPT == ""){
+          Swal.fire({
+            title: 'Ngày mượn không được rỗng',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+        if(NgayThu == ""){
+          Swal.fire({
+            title: 'Ngày hết hạn không được rỗng',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+          });
+          return false;
+        }
+        $.getJSON(`/index/forfeit/add/post?MaPT=${MaPT}&NgayThu=${NgayThu}&TienThu=${TienThu}`, function (data) {
+          if(data){
+            Swal.fire({
+              title: 'Thêm phiếu thu phạt thành công',
+              icon: 'success',
+              iconHtml: '',
+              confirmButtonText: 'Trở về',
+              showCloseButton: true
+            }).then(function() {
+                window.location = "http://localhost:3000/index/forfeit";
+            });
+          }else{
+            Swal.fire({
+              title: 'Thêm phiếu thu phạt không thành công',
+              icon: 'error',
+              iconHtml: '',
+              confirmButtonText: 'Trở về',
+              showCloseButton: true 
+            });
+          }
+        });
+      }
+
+    </script>
+{{/section}}
+<div id="element" class="container">
+    <h1 style="margin-top: 100px; margin-bottom: 50px; text-align: center">
+    THÊM PHIẾU THU TIỀN PHẠT
+    </h1> 
+   <div class="row" style="margin-bottom: 20px;">
+      <div class="col-sm-12">
+         <div class="input-group input-group-ml mb-0">
+            <div class="input-group mb-3">
+               <div class="input-group-prepend">
+                  <label class="input-group-text" for="inputGroupSelect01">Phiếu Trả Sách</label>
+               </div>
+                <input list="dspt" value="" onblur="LayThongTinPhieuTra()" placeholder="nhập mã phiếu trả, mã độc giả hay số cmnd/cccd để tìm phiếu trả" id="MaPT" class="form-control">
+                <datalist id="dspt">
+                  {{#each this.lists}}
+                    <option value="{{MaPT}} - {{HoTenDG}} - {{CMND_CCCD}}">
+                  {{/each}}
+                </datalist>  
+                {{#each this.lists}}
+                  <input hidden id="{{MaPT}}" value="{{TienNo}}" />
+                {{/each}}
+            </div>
+         </div>
+      </div>
+      {{!-- khúc này đóng khuôn phiếu trả --}}
+      <div class=" col-sm-12 card" style="margin-bottom: 18px; padding: 0">
+        <div class=" col-sm-12 card-header">
+          <b>PHIẾU THU</b>
+        </div>
+        <div class="col-sm-12 card-body">
+          {{!-- <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+          <a href="#!" class="btn btn-primary">Go somewhere</a> --}}
+          <div class="row">
+           <div class="col-sm-6">
+              <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                      Họ Tên Độc Giả
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    id="HoTenDG"
+                    readonly
+                    name="HoTenDG"
+                    value=""
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                    />
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                      Ngày Thu
+                    </span>
+                  </div>
+                  <input
+                    readonly
+                    type="text"
+                    id="NgayThu"
+                    name="NgayThu"
+                    value=""
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                    />
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                        Tiền Nợ
+                    </span>
+                  </div>
+                  <input
+                    readonly
+                    type="text"
+                    id="TienNo"
+                    name="TienNo"
+                    value=""
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                  />
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="input-group input-group-ml mb-3">
+                  <div class="input-group-prepend">
+                    <span class="input-group-text" id="inputGroup-sizing-sm">
+                      Số Tiền Thu
+                    </span>
+                  </div>
+                  <input
+                    style="color: red; font-weight: bold;"
+                    readonly
+                    type="text"
+                    id="TienThu"
+                    name="TienThu"
+                    value=""
+                    class="form-control"
+                    aria-label="Sizing example input"
+                    aria-describedby="inputGroup-sizing-sm"
+                  />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+     
+      
+    </div>
+      <div class="row" style="margin-bottom: 40px;">
+        <div class="col-sm-6">
+          <a href="/index/forfeit" class="btn btn-secondary w-100 text-white font-weight-bold mb-3">
+            <i class="fas fa-arrow-left"></i> TRỞ VỀ
+          </a>
+        </div>
+        <div class="col-sm-6">
+            <button disabled onclick="ThemPhieuTraMoi()" type="submit" id="btnAdd" class="btn btn-primary w-100 mr-2 text-white font-weight-bold"><i class="fa fa-plus"></i> THÊM MỚI</button>
+        </div>
+      </div>
+  </div>
+</div>
+
+
+  {{!-- modal mất sách --}}
+  <div class="modal fade centerModal" id="popupMissBook" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+         <div class="modal-content">
+               <div class="modal-header">
+                  <h4 class="modal-title" id="exampleModalLabel">MẤT SÁCH</h4>
+                  <button type="button" class="close" data-dismiss="modal"
+                     aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                  </button>
+               </div>
+               <div class="modal-body">
+                  <input hidden name="madocgia" type="text" id="madocgia" />
+                  <input hidden name="rIndex" type="text" id="rIndex" />
+                  <p style="font-size: 20px;">
+                     <b> Mã sách: 
+                     <span style="color:red" id="idBook"></span>
+                     </b> bị độc giả làm mất. Chọn <b>"đồng ý"</b> để xác nhận.
+                  </p>
+               </div>
+               <div class="modal-footer">
+                  <button type="submit" onclick="XuLyMatSach()"
+                     class="btn btn-danger">Đông ý
+                  </button>
+            <button type="button" class="btn btn-light"
+               data-dismiss="modal">Thoát</button>
+            </div>
+         </div>
+      </div>
+  </div>

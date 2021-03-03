@@ -1,0 +1,255 @@
+{{#section "title"}}
+Thống kê mượn sách theo thể loại
+{{/section}}
+{{#section "css"}}
+<link
+   href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
+   rel="stylesheet"
+   />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.min.css">
+<link
+   rel="stylesheet"
+   href="https://cdn.datatables.net/1.10.23/css/jquery.dataTables.min.css"
+   />
+{{!-- Thông báo đẹp --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<style>
+   #tblInfo input {
+      width: 100%;        
+      box-sizing: border-box;
+   }
+   .centerModal{
+    position: absolute;
+    float: left;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+   }
+</style>
+{{/section}}
+<div
+   class="container-fluid"
+   style="margin-top: 100px; background-color: white; padding: 15px"
+   >
+   <h1 style="color: black; margin-bottom:10px; text-align: center">
+      THỐNG KÊ TÌNH TRẠNG MƯỢN SÁCH THEO THỂ LOẠI
+   </h1>
+   <div class="row mt-5 mb-5">
+      <div class="col-sm-4">
+            <div class="input-group input-group-ml mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text" id="inputGroup-sizing-sm">
+                  Ngày Bắt Đầu
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  id="NgayBatDau"
+                  name="NgayBatDau"
+                  placeholder="__/__/____"
+                  value=""
+                  class="form-control"
+                  aria-label="Sizing example input"
+                  aria-describedby="inputGroup-sizing-sm"
+                  />
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="input-group input-group-ml mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text" id="inputGroup-sizing-sm">
+                  Ngày Kết Thúc
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  id="NgayKetThuc"
+                  name="NgayKetThuc"
+                  placeholder="__/__/____"
+                  value=""
+                  class="form-control"
+                  aria-label="Sizing example input"
+                  aria-describedby="inputGroup-sizing-sm"
+                  />
+            </div>
+        </div>
+        <div class="col-sm-4">
+          <button type="button" onclick="TimKiemDuLieu()" class="btn btn-primary">Tìm Kiếm</button>
+        </div>
+        <div class="col-sm-4">
+            <div class="input-group input-group-ml mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text" id="inputGroup-sizing-sm">
+                  Tổng số lượt mượn
+                  </span>
+                </div>
+                <input
+                readonly
+                  type="text"
+                  style="color: red; font-weight: bold"
+                  value= "{{total}} lượt"
+                  value=""
+                  class="form-control"
+                  aria-label="Sizing example input"
+                  aria-describedby="inputGroup-sizing-sm"
+                  />
+            </div>
+        </div>
+   </div>
+   <div class="table-responsive text-center">
+      <table id="tblInfo" class="display" style="width: 100%; margin-bottom: 20px">
+          <thead>
+            <tr>
+                <th>
+                  STT
+                </th>
+                <th style="min-width: 170px;">
+                  Tên Thể Loại
+                </th>
+                <th>
+                  Số Lượt Mượn
+                </th>
+                <th>
+                  Tỉ Lệ
+                </th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each this.ListType}}
+            <tr>
+                <td>
+                  {{STT}}
+                </td>
+                <td>
+                  {{TenTheLoai}}
+                </td>
+                <td>
+                  {{SoLuong}}
+                </td>
+                <td>
+                  {{TiLe}}
+                </td>
+            </tr>
+            {{/each}}
+          </tbody>
+      </table>
+   </div>
+  </div>
+</div>
+
+
+{{#section "js"}}
+{{!-- import to use datatable --}}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script>
+{{!-- khúc script này cấu hình datatable--}}
+<script>
+   $(document).ready(function () {
+     $("#tblInfo").DataTable();
+     const aYear = [];
+     for(i= 2015; i < 2021; i++){
+       aYear.push(i);
+     }
+     $("#year").val(aYear);
+   });
+   $("#tblInfo").dataTable({
+       language: {
+         sProcessing: "Đang xử lý...",
+         sLengthMenu: "Xem _MENU_ mục",
+         sZeroRecords: "Không tìm thấy dòng nào phù hợp",
+         sInfo: "Đang xem _START_ - _END_ trong _TOTAL_ mục",
+         sInfoEmpty: "Đang xem 0 đến 0 trong tổng số 0 mục",
+         sInfoFiltered: "(được lọc từ _MAX_ mục)",
+         sInfoPostFix: "",
+         sSearch: "Tìm:",
+         sUrl: "",
+         oPaginate: {
+           sFirst: "Đầu",
+           sPrevious: "Trước",
+           sNext: "Tiếp",
+           sLast: "Cuối",
+         },
+       },
+     });
+</script>
+{{!-- khúc này hiện thị thời gian --}}
+<script>
+ $('#NgayBatDau').datetimepicker({
+       format: 'd/m/Y',
+        timepicker: false,
+        mask: true,
+  });
+  $('#NgayKetThuc').datetimepicker({
+       format: 'd/m/Y',
+        timepicker: false,
+        mask: true,
+  });
+  // format
+  var getUrlParameter = function getUrlParameter(sParam) {
+    var sPageURL = window.location.search.substring(1),
+        sURLVariables = sPageURL.split('&'),
+        sParameterName,
+        i;
+
+    for (i = 0; i < sURLVariables.length; i++) {
+        sParameterName = sURLVariables[i].split('=');
+
+        if (sParameterName[0] === sParam) {
+            return typeof sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+        }
+    }
+    return false;
+  };
+  if(getUrlParameter('NgayBatDau')!= false){
+    $('#NgayBatDau').val(getUrlParameter('NgayBatDau'));
+  }
+  if(getUrlParameter('NgayKetThuc') != false){
+    $('#NgayKetThuc').val(getUrlParameter('NgayKetThuc'));
+  }
+</script>
+{{!-- Khúc này tìm kiếm dữ liệu --}}
+<script>
+  function process(date){
+   var parts = date.split("/");
+   return new Date(parts[2], parts[1] - 1, parts[0]);
+}
+
+  function TimKiemDuLieu(){
+    const NgayBatDau = $("#NgayBatDau").val();
+    const NgayKetThuc = $("#NgayKetThuc").val();
+    if(NgayBatDau == "" || NgayBatDau == "__/__/____"){
+          Swal.fire({
+               title: 'Ngày bắt đầu không hợp lệ.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+    }
+    if(NgayKetThuc == "" || NgayKetThuc == "__/__/____"){
+          Swal.fire({
+               title: 'Ngày bắt đầu không hợp lệ.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+    }
+    if(process(NgayBatDau) > process(NgayKetThuc)){
+        Swal.fire({
+               title: 'Ngày bắt đầu lớn hơn ngày kết thúc',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+    }
+    window.location = `http://localhost:3000/index/statistical/type?NgayBatDau=${NgayBatDau}&NgayKetThuc=${NgayKetThuc}`;
+  }
+</script>
+
+{{/section}}
+

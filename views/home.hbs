@@ -1,0 +1,23 @@
+{{#section "css"}}{{/section}}
+{{#section "js"}}{{/section}}
+<!-- ======= Hero Section ======= -->
+<section id="hero">
+  <div class="hero-container" data-aos="zoom-in" data-aos-delay="100">
+    <h1 style="font-size: 350%; margin-bottom: 5%">
+      THƯ VIỆN K2
+    </h1>
+    {{#if lcIsAuthenticated}}
+      <h2>
+        Xin chào
+        {{lcAuthUser.HoTenNV}}
+      </h2>
+    {{else}}
+      <h2>
+        Đăng nhập để sử dụng
+      </h2>
+      <a href="/login" style="text-decoration: none;" class="btn-get-started">
+        Đăng Nhập
+      </a>
+    {{/if}}
+  </div>
+</section>

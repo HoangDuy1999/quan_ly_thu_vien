@@ -1,0 +1,375 @@
+{{#section "title"}}
+  Chỉnh sửa TT nhân viên
+{{/section}}
+
+{{#section 'css'}}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.min.css">
+{{/section}}
+
+{{#section 'js'}}
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js"></script>
+   {{!-- Thông báo đẹp --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script>
+      $(document).ready(function () {
+        var GioiTinh = document.getElementById('GioiTinh');
+        GioiTinh.value = `{{GioiTinh}}`;
+        var MaBoPhan = document.getElementById('MaBoPhan');
+        MaBoPhan.value = `{{selectedpartInfo}}`;
+        var MaBangCap = document.getElementById('MaBangCap');
+        MaBangCap.value = `{{selectedDegree}}`;
+        var MaChucVu = document.getElementById('MaChucVu');
+        MaChucVu.value = `{{selectedPosition}}`;
+        var isDeleted = document.getElementById('isDeleted');
+        isDeleted.value = `{{selectedIsDeleted}}`;
+      })
+
+    </script>
+    <script>
+      $('#NgaySinh').datetimepicker({
+        defaultDate: `{{NgaySinh}}`,
+        format: 'd/m/Y',
+        timepicker: false,
+        mask: true,
+      });
+   </script>
+   {{!-- xử lý ẩn hiện select --}}
+   <script>
+       $(document).ready(function () {
+         const mabp = $("#MaBoPhan").val();
+         if(mabp == "BP01"){
+            var chucvuTP = document.getElementById('CV03');
+            var chucvuPP = document.getElementById('CV04');
+            var chucvuNV = document.getElementById('CV05');
+            chucvuTP.hidden = "hidden";
+            chucvuPP.hidden = "hidden";
+            chucvuNV.hidden = "hidden";
+         }
+      })
+      function partchange() {
+         const mabp = $("#MaBoPhan").val();
+         if(mabp != "BP01"){
+            var macv = document.getElementById('MaChucVu');
+            var chucvu = document.getElementById('CV02');
+            chucvu.hidden = 'hidden';
+
+            var chucvuTP = document.getElementById('CV03');
+            var chucvuPP = document.getElementById('CV04');
+            var chucvuNV = document.getElementById('CV05');
+            chucvuTP.hidden = "";
+            chucvuPP.hidden = "";
+            chucvuNV.hidden = "";
+            macv.value = "CV05";
+         }else{
+            var macv = document.getElementById('MaChucVu');;
+            var chucvuPGD = document.getElementById('CV02');
+            var chucvuTP = document.getElementById('CV03');
+            var chucvuPP = document.getElementById('CV04');
+            var chucvuNV = document.getElementById('CV05');
+            chucvuPGD.hidden = "";
+            chucvuTP.hidden = "hidden";
+            chucvuPP.hidden = "hidden";
+            chucvuNV.hidden = "hidden";
+            macv.value = "CV02";
+         }
+      }
+   </script>
+   {{!-- xử lý sự kiện post --}}
+   <script>
+      function isNumberKey(e) {
+        var charCode = (e.which) ? e.which : e.keyCode;
+        if (charCode > 31 && (charCode < 48 || charCode > 57))
+            return false;
+        return true;
+      }
+      $('#frmUpdateStaff').on('submit', function (e) {
+        e.preventDefault();
+        validate();
+      })
+      function validate(){
+        const MaNhanVien = $('#MaNhanVien').val();
+        const HoTenNV = $('#HoTenNV').val();
+        const GioiTinh = $('#GioiTinh').val();
+        const DiaChi = $('#DiaChi').val();
+        const Sdt = $('#Sdt').val();
+        const NgaySinh = $('#NgaySinh').val();
+        const MaBangCap = $('#MaBangCap').val();
+        const MaBoPhan = $('#MaBoPhan').val();
+        const MaChucVu = $('#MaChucVu').val();
+        const isDeleted = $('#isDeleted').val();
+        var vnf_regex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/g;
+        var date_regex = /^([0-2][0-9]|(3)[0-1])(\/)(((0)[0-9])|((1)[0-2]))(\/)\d{4}$/i;
+        if(HoTenNV == ""){
+            Swal.fire({
+               title: 'Họ tên nhân viên không được rỗng.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+         }
+        if (!(date_regex.test(NgaySinh.trim()))) {
+            Swal.fire({
+               title: 'Ngày sinh không đúng định dạng',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+        }
+        if(DiaChi == ""){
+            Swal.fire({
+               title: 'Địa chỉ không được rỗng.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+        }
+         if(Sdt == ""){
+            Swal.fire({
+               title: 'Số điện thoại không được rỗng.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+         }
+        if (vnf_regex.test(Sdt) == false) {
+            Swal.fire({
+               title: 'Số điện thoại của bạn không đúng định dạng',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+        }
+        $.getJSON(`/index/staff/edit/isValidPhone?MaNhanVien=${MaNhanVien}&Sdt=${Sdt}`, function (data) {
+          if (data){
+            Swal.fire({
+            title: 'Số điện thoại đã tồn tại',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+            });
+            return false;
+          }else{
+            $.getJSON(`/index/staff/UpdateStaff?MaNhanVien=${MaNhanVien}&HoTenNV=${HoTenNV}&GioiTinh=${GioiTinh}&DiaChi=${DiaChi}&isDeleted=${isDeleted}
+                  &Sdt=${Sdt}&NgaySinh=${NgaySinh}&MaBangCap=${MaBangCap}&MaBoPhan=${MaBoPhan}&MaChucVu=${MaChucVu}`, function (data) {
+              if (data){
+                Swal.fire({
+                title: 'Cập nhật thông tin nhân viên thành công',
+                icon: 'success',
+                iconHtml: '',
+                confirmButtonText: 'Trở về',
+                showCloseButton: true
+                });
+                return false;
+              }else{
+                Swal.fire({
+                  title: 'Cập nhật thông tin nhân viên thất bại thất bại.',
+                  icon: 'error',
+                  iconHtml: '',
+                  confirmButtonText: 'Trở về',
+                  showCloseButton: true
+                });
+                  return false;
+              }
+            })
+            return false;
+          }
+        })
+      }
+   </script>
+{{/section}}
+
+<h1 style="margin-top: 100px; margin-bottom: 50px; text-align: center">
+  CHỈNH SỬA THÔNG TIN NHÂN VIÊN
+</h1>
+<div class="container">
+  <form method="POST" id="frmUpdateStaff" action="">
+      <div class="row" style="margin-bottom: 20px;">
+         <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Mã Nhân Viên
+               </span>
+            </div>
+            <input
+               type="text"
+               id="MaNhanVien"
+               value="{{MaNhanVien}}"
+               name="MaNV"
+               readonly
+               value=""
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Họ Và Tên
+               </span>
+            </div>
+            <input
+               type="text"
+               id="HoTenNV"
+               value="{{HoTenNV}}"
+               name="HoTenNV"
+               value=""
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-0">
+            <div class="input-group mb-3">
+               <div class="input-group-prepend">
+                  <label class="input-group-text" for="inputGroupSelect01">Giới Tính</label>
+               </div>
+               <select class="custom-select" id="GioiTinh" name="GioiTinh">
+                  <option selected value="Nam">Nam</option>
+                  <option value="Nữ">Nữ</option>
+                  <option value="Khác">Khác</option>
+               </select>
+            </div>
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Địa Chỉ
+               </span>
+            </div>
+            <input
+               type="text"
+               id="DiaChi"
+               name="DiaChi"
+               value="{{DiaChi}}"
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Số Điện Thoại
+               </span>
+            </div>
+            <input
+               type="text"
+               id="Sdt"
+               name="Sdt"
+               value="{{Sdt}}"
+               class="form-control"
+               onkeypress="return isNumberKey(event)"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Ngày Sinh
+               </span>
+            </div>
+            <input
+               type="text"
+               id="NgaySinh"
+               name="NgaySinh"
+               placeholder="__/__/____"
+               value="{{NgaySinh}}"
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-0">
+            <div class="input-group mb-3">
+               <div class="input-group-prepend">
+                  <label class="input-group-text" for="inputGroupSelect01">Bằng Cấp</label>
+               </div>
+               <select class="custom-select" id="MaBangCap" name="MaBangCap">
+                 {{#each this.degreesInfo}}
+                  <option value="{{MaBangCap}}">{{LoaiBangCap}}</option>
+                {{/each}}
+               </select>
+            </div>
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-0">
+            <div class="input-group mb-3">
+               <div class="input-group-prepend">
+                  <label class="input-group-text" for="inputGroupSelect01">Bộ Phận</label>
+               </div>
+               <select  onchange="partchange()" class="custom-select" id="MaBoPhan" name="MaBoPhan">
+                 {{#each this.partInfos}}
+                  <option value="{{MaBoPhan}}">{{TenBoPhan}}</option>
+                {{/each}}
+               </select>
+            </div>
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-0">
+            <div class="input-group mb-3">
+               <div class="input-group-prepend">
+                  <label class="input-group-text" for="inputGroupSelect01">Chức Vụ</label>
+               </div>
+               <select class="custom-select" id="MaChucVu" name="MaChucVu">
+                 {{#each this.positionsInfo}}
+                  <option id="{{MaChucVu}}" value="{{MaChucVu}}">{{TenChucVu}}</option>
+                {{/each}}
+               </select>
+            </div>
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-0">
+            <div class="input-group mb-3">
+               <div class="input-group-prepend">
+                  <label class="input-group-text" for="inputGroupSelect01">Tình Trạng</label>
+               </div>
+               <select class="custom-select" id="isDeleted" name="isDeleted">
+                  <option value="0">Đăng hoạt động</option>
+                  <option value="1">Đã xóa</option>
+               </select>
+            </div>
+         </div>
+      </div>
+    </div>
+      <div class="row" style="margin-bottom: 40px;">
+        <div class="col-sm-6">
+          <a href="/index/staff" class="btn btn-secondary w-100 text-white font-weight-bold mb-3">
+            <i class="fas fa-arrow-left"></i> TRỞ VỀ
+          </a>
+        </div>
+        <div class="col-sm-6">
+            <button type="submit" class="btn btn-primary w-100 mr-2 text-white font-weight-bold"><i class="fa fa-plus"></i> CẬP NHẬT </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

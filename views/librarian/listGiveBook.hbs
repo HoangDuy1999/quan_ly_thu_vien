@@ -1,0 +1,481 @@
+{{#section "title"}}
+  Danh sách phiếu trả
+{{/section}}
+{{#section "css"}}
+<link
+   href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
+   rel="stylesheet"
+   />
+<link
+   rel="stylesheet"
+   href="https://cdn.datatables.net/1.10.23/css/jquery.dataTables.min.css"
+   />
+{{!-- Thông báo đẹp --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<style>
+   thead, td{
+      text-align: center;;
+   }
+   #tblBook input {
+      width: 100%;        
+      box-sizing: border-box;
+   }
+   .centerModal{
+    position: absolute;
+    float: left;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+   }
+</style>
+{{/section}}
+<div
+   class="container-fluid"
+   style="margin-top: 100px; background-color: white; padding: 15px"
+   >
+   <h1 style="color: black; margin-bottom:10px; text-align: center">
+      PHIẾU TRẢ SÁCH
+   <h3 style="color: black; margin-bottom:30px; text-align: center">{{BoPhan}}</h3>
+   <a class="btn btn-primary mb-4" href="/index/give_book/add" style="font-weight: bold;">
+      <i class="fa fa-plus"></i> THÊM PHIẾU TRẢ
+   </a>
+   <div class="table-responsive text-center" style="margin: 0; padding: 0;">
+      <table id="tblBook" class="display" style="width: 99.5%; margin:0; padding: 0">
+         <thead>
+            <tr>
+               <th>
+                  Mã Phiếu Trả
+               </th>
+               <th style="min-width: 170px;">
+                  Mã Phiếu Mượn
+               </th>
+               <th>
+                  Độc Giả
+               </th>
+               <th>
+                  Ngày Mượn
+               </th>
+               <th>
+                  Ngày Hết Hạn
+               </th>
+               <th>
+                  Ngày Trả
+               </th>
+               <th>
+                  Tiền phạt
+               </th>
+               <th>
+                  Tình Trạng
+               </th>
+               <th style="max-width: 50px; min-width: 50px">
+                  Thao Tác
+               </th>
+            </tr>
+         </thead>
+         <tbody>
+            {{#each this.lists}}
+            <tr>
+               <td id="MaPT">
+                  {{MaPT}}
+               </td>
+               <td>
+                  {{MaPM}}
+               </td>
+               <td>
+                  {{HoTenDG}} - {{CMND_CCCD}}
+               </td>
+               <td>
+               {{NgayMuon}}
+               </td>
+               <td>
+               {{NgayHetHan}}
+               </td>
+               <td>
+                  {{NgayTra}}
+               </td>
+               <td>
+                  {{TienPhatKyNay}}
+               </td>
+               <td>
+                  {{TinhTrang}}
+               </td>
+               <td style="min-width: 20px; max-width: 20px">
+                  <div class="row" style="text-align: center;">
+                     <a
+                        class="btn btn-primary btn-sm mr-2 detailBook"
+                        style="margin-left: 5%;"
+                        href="javascript;;"
+                        role="button"
+                        title="chi tiết"
+                        data-toggle="modal"
+                        data-target="#popupdetail"
+                        >
+                     <i class="fas fa-info-circle"></i>
+                     </a>
+                     {{#if IsDeleted}}
+                     <a
+                        class="btn btn-danger btn-sm mr-2 delStaff"
+                        style="margin-left: 5%; pointer-events: none; opacity: 0.6"
+                        href="javascript;;"
+                        role="button"
+                        title="Xóa phiếu trả"
+                        data-toggle="modal"
+                        data-target="#popupDelete"
+                        >
+                     <i class="fa fa-trash"></i>
+                     </a>
+                     {{else}}
+                     <a
+                        class="btn btn-danger btn-sm mr-2 delStaff"
+                        style="margin-left: 5%;"
+                        href="javascript;;"
+                        role="button"
+                        title="Xóa phiếu trả"
+                        data-toggle="modal"
+                        data-target="#popupDelete"
+                        >
+                     <i class="fa fa-trash"></i>
+                     </a>
+                     {{/if}}
+                  </div>
+               </td>
+            </tr>
+            {{/each}}
+         </tbody>
+      </table>
+   </div>
+   {{! KHU VỰC HIÊN POP UP }}
+   {{!-- pop up xóa --}}
+   <div class="modal fade centerModal" id="popupDelete" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+         <div class="modal-content">
+               <div class="modal-header">
+                  <h4 class="modal-title" id="exampleModalLabel">XÓA PHIẾU TRẢ SÁCH</h4>
+                  <button type="button" class="close" data-dismiss="modal"
+                     aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                  </button>
+               </div>
+               <div class="modal-body">
+                  <input hidden name="idSach" type="text" id="idSach" />
+                  <input hidden name="rIndex" type="text" id="rIndex" />
+                  <p style="font-size: 20px;">
+                     <b> Mã phiếu trả: 
+                     <span style="color:red" id="idBook"></span>
+                     </b>. Bấm <b>"đồng ý"</b> để xóa phiếu trả.
+                  </p>
+               </div>
+               <div class="modal-footer">
+                  <button type="submit" onclick="DelCardBorrowBook()"
+                     class="btn btn-danger">Đông ý
+                  </button>
+            <button type="button" class="btn btn-light"
+               data-dismiss="modal">Đóng</button>
+            </div>
+         </div>
+      </div>
+  </div>
+</div>
+{{!-- Chi tiết phiếu trả --}}
+<div class="modal fade" id="popupdetail" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+   <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">THÔNG TIN CHI TIẾT</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+         </div>
+          <div class="modal-body">
+               <div class="row" style="pointer-events: none; cursor: default;">
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Mã Phiếu Trả</span>
+                        </div>
+                        <input type="text" id ="dMaPT" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Mã Phiếu Mượn</span>
+                        </div>
+                        <input type="text" id="dMaPM" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Độc Giả</span>
+                        </div>
+                        <input type="text" id="dDocGia" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm"> Ngày Mượn </span>
+                        </div>
+                        <input type="text" id="dNgayMuon" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Ngày Hết Hạn</span>
+                        </div>
+                        <input type="text" id="dNgayHetHan" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+  
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Ngày Trả</span>
+                        </div>
+                        <input type="text" id="dNgayTra" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Tiền Phạt</span>
+                        </div>
+                        <input type="text" id="dTienPhat" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-6">
+                     <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                           <span class="input-group-text" id="inputGroup-sizing-sm">Tiền Nợ</span>
+                        </div>
+                        <input type="text" id="dTienNo" value="" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm">
+                     </div>
+                  </div>
+                  <div class="col-sm-12">
+                    <h4 class="text-center">Thông tin sách trả</h4>
+                  </div>
+                    <table id="tblBorrowBook" name="tblBook" class="table table-bordered"  style="width: 100%;">
+                     <thead>
+                        <tr>
+                            <th>
+                              STT
+                            </th>
+                            <th>
+                              Mã Sách
+                            </th>
+                            <th>
+                              Tên Sách
+                            </th>
+                            <th>
+                              Số Ngày Mượn
+                            </th>
+                            <th>
+                              Tiền Phạt
+                            </th>
+                            <th>
+                              Lý Do
+                            </th>
+                            <th hidden>
+                              Giá Tiền
+                            </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Thoát</button>
+          </div>
+      </div>
+   </div>
+</div>
+
+{{#section "js"}}
+{{!-- import to use datatable --}}
+<script src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"></script>
+{{!-- khúc script này cấu hình datatable--}}
+<script>
+   $(document).ready(function () {
+     $("#tblBook").DataTable();
+   });
+   $("#tblBook").dataTable({
+       language: {
+         sProcessing: "Đang xử lý...",
+         sLengthMenu: "Xem _MENU_ mục",
+         sZeroRecords: "Không tìm thấy dòng nào phù hợp",
+         sInfo: "Đang xem _START_ - _END_ trong _TOTAL_ mục",
+         sInfoEmpty: "Đang xem 0 đến 0 trong tổng số 0 mục",
+         sInfoFiltered: "(được lọc từ _MAX_ mục)",
+         sInfoPostFix: "",
+         sSearch: "Tìm:",
+         sUrl: "",
+         oPaginate: {
+           sFirst: "Đầu",
+           sPrevious: "Trước",
+           sNext: "Tiếp",
+           sLast: "Cuối",
+         },
+       },
+     });
+</script>
+{{!-- Khúc dưới này hiện chi tiết phiếu trả --}}
+<script>
+   $("#tblBook").on("click", ".detailBook", function (event) {
+     var $row = $(this).closest("tr");
+     const maPT = $row.find("#MaPT").text().trim();
+      $.getJSON(`/index/give_book/detail?maPT=${maPT}`, function (data) {
+        if(data){
+          // thêm thông tin phiếu mượn
+          $("#dMaPT").val(data.MaPT);
+          $("#dMaPM").val(data.MaPM);
+          $("#dDocGia").val(data.HoTenDG + " - " + data.CMND_CCCD);
+          $("#dNgayMuon").val(data.NgayMuon);
+          $("#dGhiChu").val(data.GhiChu);
+          $("#dNgayHetHan").val(data.NgayHetHan);
+          $("#dNgayTra").val(data.NgayTra);
+          let tienphat = parseInt(data.TienPhatKyNay);
+          let tienno = parseInt(data.TienNo);
+          tienphat = tienphat.toLocaleString('it-IT', {style : 'currency', currency : 'VND'});
+          tienno = tienno.toLocaleString('it-IT', {style : 'currency', currency : 'VND'});
+          $("#dTienPhat").val(tienphat);
+          $("#dTienNo").val(tienno);
+          
+          // lấy chi tiết phiếu trả
+          $.getJSON(`/index/give_book/detailCardGiveBook?maPT=${maPT}`, function (data) {
+            // thêm dữ liệu vô bảng tbl
+            console.log(data);
+            if($("#tblBorrowBook").find('tr').length > 0){
+              var tb = document.getElementById('tblBorrowBook');
+                while(tb.rows.length > 1) {
+                tb.deleteRow(1);
+              }
+            }
+            let i=1;
+            for(const val of data){
+               let temp = val.TienPhat;
+               temp = temp.toLocaleString('it-IT', {style : 'currency', currency : 'VND'});
+              $('#tblBorrowBook > tbody:last').append(`
+                <tr> 
+                    <td class="STT">${i++}</td>
+                    <td>${val.MaSach}</td>
+                    <td>${val.TenSach}</td>
+                    <td>${val.SoNgayMuon} ngày</td>
+                    <td>${temp}</td>
+                    <td>${val.LyDo}</td>
+                </tr>
+              `);
+            }
+          });
+        }
+     });
+   });
+</script>
+{{!-- khúc script này xử lý sự kiện xóa --}}
+<script>
+   //lấy dữ liệu hiện popup
+   $(document).ready(function () {
+       $("#tblBook").on("click", ".delStaff", function (event) {
+           var $row = $(this).closest("tr");
+           $("#idBook").text($row.find("#MaPT").text());
+           $("#idSach").val($row.find("#MaPT").text());  
+           $("#rIndex").val($row.index()); 
+       });
+   });
+   
+   function DelCardBorrowBook() {
+       let rIndex = $('#rIndex').val();
+       const MaPT = $('#idSach').val().trim();
+       
+      if(MaPT == undefined || MaPT == ""){
+         $("[data-dismiss=modal]").trigger({ type: "click" });
+             setTimeout(function(){
+               Swal.fire({
+                 title: 'Thất bại.',
+                 icon: 'error',
+                 iconHtml: '',
+                 confirmButtonText: 'Trở về',
+                 showCloseButton: true
+               });
+         })
+         return false;
+      }
+       $.getJSON(`/index/give_book/deleted?MaPT=${MaPT}`, function (data) {
+        if (data == true) {
+             $("[data-dismiss=modal]").trigger({ type: "click" });
+             setTimeout(function(){
+               Swal.fire({
+                 title: 'Thành công',
+                 icon: 'success',
+                 iconHtml: '',
+                 confirmButtonText: 'Trở về',
+                 showCloseButton: true
+               });
+   
+               //cập nhật dữ liệu trong bảng
+               var table = $("#tblBook").DataTable();
+               var info = table.page.info();
+               const total = parseInt(info.recordsTotal);
+               const id_tblbook = $('#idSach').val().trim();
+               let text = "";
+               for(i = 0; i < total; i++){
+                  var temp = table.row(i).data();
+                  if(temp[0].trim() == id_tblbook){
+                     temp[7] = "Đã xóa";
+                     temp[8] = ` 
+                     <div class="row" style="text-align: center;">
+                     <a
+                        class="btn btn-primary btn-sm mr-2 detailBook"
+                        style="margin-left: 5%;"
+                        href="javascript;;"
+                        role="button"
+                        title="chi tiết"
+                        data-toggle="modal"
+                        data-target="#popupdetail"
+                        >
+                     <i class="fas fa-info-circle"></i>
+                     </a>
+                      <a
+                        class="btn btn-danger btn-sm mr-2 delStaff"
+                        style="margin-left: 5%; pointer-events: none; opacity: 0.6"
+                        href="javascript;;"
+                        role="button"
+                        title="Xóa phiếu trả"
+                        data-toggle="modal"
+                        data-target="#popupDelete"
+                        >
+                     <i class="fa fa-trash"></i>
+                     </a>
+                     </div>
+                     `;
+                     $("#tblBook").dataTable().fnUpdate(temp, i, undefined,false);
+                  }
+               }
+                
+             }, 600);
+
+           return false;
+         }
+         if(data == false){
+            $("[data-dismiss=modal]").trigger({ type: "click" });
+             setTimeout(function(){
+               Swal.fire({
+                 title: 'Thất bại',
+                 'text': data,
+                 icon: 'error',
+                 iconHtml: '',
+                 confirmButtonText: 'Trở về',
+                 showCloseButton: true
+               })
+             }, 600);
+           return false;
+         }
+       })
+   }
+</script>
+{{/section}}
+

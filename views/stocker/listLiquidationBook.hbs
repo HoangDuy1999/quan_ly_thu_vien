@@ -1,0 +1,337 @@
+{{#section "title"}}
+  Danh Sách Thanh Lý Sách
+{{/section}}
+{{#section "css"}}
+  <link
+    href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdn.datatables.net/1.10.23/css/jquery.dataTables.min.css"
+  />
+  {{! Thông báo đẹp }}
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+  <style>
+    #tblLiquidation input {
+      width: 100%;        
+      box-sizing: border-box;
+   }
+   .centerModal{
+    position: absolute;
+    float: left;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+   }
+  </style>
+{{/section}}
+<div
+  class="container-fluid"
+  style="margin-top: 100px; background-color: white; padding: 15px"
+>
+  <h1 style="color: black; margin-bottom:10px; text-align: center">
+    DANH SÁCH THANH LÝ SÁCH
+  </h1>
+  <h3 style="color: black; margin-bottom:30px; text-align: center">
+    {{BoPhan}}
+  </h3>
+  <a
+    class="btn btn-primary mb-4"
+    href="/index/stocker/book_liquidation/add"
+    style="font-weight: bold;"
+  >
+    <i class="fa fa-plus"></i>
+    THÊM PHIẾU THANH LÝ
+  </a>
+  <div class="table-responsive">
+    <table
+      id="tblLiquidation"
+      class="display"
+      style="width: 100%; margin-bottom: 20px"
+    >
+      <thead style="text-align: center;">
+        <tr>
+          <th>
+            Mã Phiếu Thanh Lý
+          </th>
+          <th style="min-width: 170px;">
+            Nhân Viên Thực Hiện
+          </th>
+          <th>
+            Ngày Thành Lý
+          </th>
+          <th>
+            Lý Do Thanh Lý
+          </th>
+          <th>
+            Thao Tác
+          </th>
+        </tr>
+      </thead>
+      <tbody style="text-align: center;">
+        {{#each this.lists}}
+          <tr>
+            <td id="MaPhieuThanhLy">
+              {{MaPhieuThanhLy}}
+            </td>
+            <td>
+              {{MaNV}}
+              -
+              {{HoTenNV}}
+            </td>
+            <td>
+              {{NgayThanhLy}}
+            </td>
+            <td>
+              {{MoTa}}
+            </td>
+            <td>
+              <a
+                class="btn btn-primary btn-sm mr-2 detaialLiquidation"
+                style="margin-left: 5%"
+                href="javascript;;"
+                role="button"
+                title="chi tiết"
+                data-toggle="modal"
+                data-target="#popupdetail"
+              >
+                <i class="fas fa-info-circle"></i>
+              </a>
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  <div class="row mt-5">
+    <div class="col-sm-12 mt-5 mb-5 text-center">
+      <h1>
+        THÔNG TIN SÁCH ĐỘC GIẢ LÀM MẤT
+      </h1>
+    </div>
+    <div class="col-sm-12">
+      <table
+        id="tblLostBook"
+        class="table table-bordered"
+        style="width: 100%; margin-bottom: 20px; text-align: center"
+      >
+        <thead>
+          <tr>
+            <th>
+              Mã Phiếu Trả
+            </th>
+            <th>
+              Mã Sách
+            </th>
+            <th>
+              Tên Sách
+            </th>
+            <th>
+              Số Lượng
+            </th>
+            <th>
+              Thao Tác
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each this.listBook}}
+            <tr>
+              <td id="MaPT">
+                {{MaPT}}
+              </td>
+              <td id="MaSachTT">
+                {{MaSach}}
+              </td>
+              <td>
+                {{TenSach}}
+              </td>
+              <td>
+                1 cuốn
+              </td>
+              <td>
+                <a
+                  class="btn btn-primary liquidation"
+                  style="margin-left: 5%; color: white"
+                  role="button"
+                  title="Thanh Lý"
+                >
+                  <i class="fas fa-check"></i>
+                  Thanh lý
+                </a>
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{{! Chi tiết }}
+<div
+  class="modal fade"
+  id="popupdetail"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="exampleModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">
+          THÔNG TIN CHI TIẾT
+        </h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">
+            ×
+          </span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="col-sm-12 text-center">
+          <h4>
+            THÔNG TIN SÁCH THANH LÝ
+          </h4>
+        </div>
+        <div class="col-sm-12">
+          <table
+            id="tblBook"
+            name="tblBook"
+            class="table table-bordered"
+            style="width: 100%; margin-bottom: 20px; text-align: center"
+          >
+            <thead>
+              <tr>
+                <th>
+                  STT
+                </th>
+                <th>
+                  Mã Sách
+                </th>
+                <th>
+                  Tên Sách
+                </th>
+                <th>
+                  Số Lượng Sách Mất
+                </th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Thoát
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{{#section "js"}}
+  {{! import to use datatable }}
+  <script
+    src="https://cdn.datatables.net/1.10.23/js/jquery.dataTables.min.js"
+  ></script>
+  {{! khúc script này cấu hình datatable}}
+  <script>
+    $(document).ready(function () {
+     $("#tblLiquidation").DataTable();
+   });
+   $("#tblLiquidation").dataTable({
+       language: {
+         sProcessing: "Đang xử lý...",
+         sLengthMenu: "Xem _MENU_ mục",
+         sZeroRecords: "Không tìm thấy dòng nào phù hợp",
+         sInfo: "Đang xem _START_ - _END_ trong _TOTAL_ mục",
+         sInfoEmpty: "Đang xem 0 đến 0 trong tổng số 0 mục",
+         sInfoFiltered: "(được lọc từ _MAX_ mục)",
+         sInfoPostFix: "",
+         sSearch: "Tìm:",
+         sUrl: "",
+         oPaginate: {
+           sFirst: "Đầu",
+           sPrevious: "Trước",
+           sNext: "Tiếp",
+           sLast: "Cuối",
+         },
+       },
+     });
+  </script>
+  {{! Khúc dưới này hiện chi tiết nhân viên }}
+  <script>
+    $("#tblLiquidation").on("click", ".detaialLiquidation", function (event) {
+     var $row = $(this).closest("tr");
+     const MaPhieuThanhLy = $row.find("#MaPhieuThanhLy").text().trim();
+     $.getJSON(`/index/stocker/book_liquidation/detail?MaPhieuThanhLy=${MaPhieuThanhLy}`, function (data) {
+        if(data.length > 0){
+          setTimeout(function(){ 
+             $('#tblBook > tbody> tr').detach();
+          }, 10);
+          let i = 1;
+        setTimeout(function(){
+            for(const val of data){
+            $('#tblBook > tbody').append(`
+    <tr>
+      <td class="STT">
+        ${i}
+      </td>
+      <td>
+        ${val.MaSach}
+      </td>
+      <td>
+        ${val.TenSach}
+      </td>
+      <td>
+        ${val.SoLuong}
+      </td>
+    </tr>
+    `);
+              i+=1;
+            }
+         }, 20);
+      
+        }
+     });
+   });
+  </script>
+  {{! Thanh lý sách model }}
+  <script>
+    $("#tblLostBook").on("click", ".liquidation", function (event) {
+      var $row = $(this).closest("tr");
+      const MaSachTT = $row.find("#MaSachTT").text().trim();
+      const MaPT = $row.find("#MaPT").text().trim();
+      $.getJSON(`/index/stocker/book_liquidation/add/direct?MaSach=${MaSachTT}&MaPT=${MaPT}`, function (data) {
+        if(data){
+          Swal.fire({
+                title: 'Thêm phiếu thanh lý thành công',
+                icon: 'success',
+                iconHtml: '',
+                confirmButtonText: 'Trở về',
+                showCloseButton: true
+              }).then(function() {
+                  window.location = "http://localhost:3000/index/stocker/book_liquidation";
+              });
+              return false;
+        }else{
+          Swal.fire({
+                title: 'Thêm phiếu thanh lý không thành công',
+                icon: 'error',
+                iconHtml: '',
+                confirmButtonText: 'Trở về',
+                showCloseButton: true
+              })
+          return false;
+        }
+        return false;
+      });
+    });
+  </script>
+{{/section}}

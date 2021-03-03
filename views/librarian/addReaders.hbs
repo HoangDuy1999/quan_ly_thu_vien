@@ -1,0 +1,381 @@
+{{#section "title"}}
+Thêm độc giả
+{{/section}}
+
+{{#section 'css'}}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.min.css">
+{{/section}}
+
+{{#section 'js'}}
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js"></script>
+   {{!-- Thông báo đẹp --}}
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+   {{!-- Hiện các dữ liệu mặc định --}}
+   <script>
+      Number.prototype.padLeft = function(base,chr){
+         var  len = (String(base || 10).length - String(this).length)+1;
+         return len > 0? new Array(len).join(chr || '0')+this : this;
+      }
+      function leapYear(year)
+      {
+         return ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0);
+      }
+      function formatDate(d){
+         dformat = [(d.getMonth()+1).padLeft(),
+               d.getDate().padLeft(),
+               d.getFullYear()].join('/') +' ' +
+              [d.getHours().padLeft(),
+               d.getMinutes().padLeft(),
+               d.getSeconds().padLeft()].join(':');
+         var arr = dformat.split('/');
+         dformat = arr[1] +"/"+ arr[0]+"/" + arr[2];
+         return dformat;
+      }
+      
+      function findExpirationDate(d){
+         var aDays = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+         var day = d.getDate();
+         var month = d.getMonth();
+         var year = d.getFullYear();
+         if((parseInt(month) + 7) > 12){
+            month = (parseInt(month) - 12).padLeft();
+            year = (parseInt(year) + 1).padLeft();
+            if(leapYear(year)){
+               aDays[2] = 29;
+            }
+            day = aDays[parseInt(month) - 12];
+         }else{
+            month = (parseInt(month) + 7).padLeft();
+            if(leapYear(year)){
+               aDays[2] = 29;
+            }
+            if(day > aDays[parseInt(month)]){
+               day = aDays[parseInt(month)];
+            }
+         }
+         var hour = d.getHours().padLeft();
+         var minutes = d.getMinutes().padLeft();
+         var seconds = d.getSeconds().padLeft();
+         return day + "/" + month + "/" + year + " " + hour + ":" + minutes + ":" + seconds;
+      }
+
+      $('#NgaySinh').datetimepicker({
+         format: 'd/m/Y',
+         timepicker: false,
+         mask: true,
+      });
+      var d = new Date();
+      $('#NgayLapThe').val(formatDate(d));
+      $('#NgayHetHan').val(findExpirationDate(d));
+   </script>
+   {{!-- xử lý sự kiện post --}}
+   <script>
+      function isNumberKey(e) {
+        var charCode = (e.which) ? e.which : e.keyCode;
+        if (charCode > 31 && (charCode < 48 || charCode > 57))
+            return false;
+        return true;
+      }
+      $('#frmAddStaff').on('submit', function (e) {
+        e.preventDefault();
+        validate();
+      })
+      function validateEmail(VAL) {           
+         var email = new RegExp('^[a-z0-9](\.?[a-z0-9]){5,}@g(oogle)?mail\.com$');
+         return email.test(VAL);
+      }
+      function validate(){
+         const HoTenDG = $('#HoTenDG').val();
+         const CMND_CCCD = $('#CMND_CCCD').val();
+         const DiaChi = $('#DiaChi').val();
+         const Email = $('#Email').val();
+         const NgaySinh = $('#NgaySinh').val();
+         const MaLoaiDG = $('#MaLoaiDG').val();
+         const NgayLapThe = $('#NgayLapThe').val();
+         const NgayHetHan = $('#NgayHetHan').val();
+         var vnf_regex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/g;
+         var date_regex = /^([0-2][0-9]|(3)[0-1])(\/)(((0)[0-9])|((1)[0-2]))(\/)\d{4}$/i;
+         if(CMND_CCCD == ""){
+            Swal.fire({
+               title: ' CMND_CCCD không được rỗng.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+         }
+        if(HoTenDG == ""){
+            Swal.fire({
+               title: 'Họ tên nhân viên không được rỗng.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+         }
+          if (!(date_regex.test(NgaySinh.trim()))) {
+            Swal.fire({
+               title: 'Ngày sinh không đúng định dạng',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+        }
+        if(DiaChi == ""){
+            Swal.fire({
+               title: 'Địa chỉ không được rỗng.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+        }
+         if(Email == ""){
+            Swal.fire({
+               title: 'Thư điện tử không được rỗng.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+         }
+         if(!validateEmail(Email)){
+            Swal.fire({
+               title: 'Thư điện tử không hợp lệ',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+         }
+
+        $.getJSON(`/index/manager_readers/add/isValidPassPort?CMND_CCCD=${CMND_CCCD}`, function (data) {
+          if (data){
+            Swal.fire({
+            title: 'Số CMND/CCCD đã được sử dụng',
+            icon: 'error',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+            });
+            return false;
+          }else{
+            $.getJSON(`/index/manager_readers/add/post?HoTenDG=${HoTenDG}&CMND_CCCD=${CMND_CCCD}&DiaChi=${DiaChi}&Email=${Email}&NgaySinh=${NgaySinh}&MaLoaiDG=${MaLoaiDG}&NgayLapThe=${NgayLapThe}&NgayHetHan=${NgayHetHan}`, function (data) {
+              if (data){
+                Swal.fire({
+                title: 'Thêm độc giả thành công',
+                icon: 'success',
+                iconHtml: '',
+                confirmButtonText: 'Trở về',
+                showCloseButton: true
+                });
+                return false;
+              }else{
+                Swal.fire({
+                  title: 'Thêm độc giả thất bại.',
+                  icon: 'error',
+                  iconHtml: '',
+                  confirmButtonText: 'Trở về',
+                  showCloseButton: true
+                });
+                return false;
+              }
+            })
+          }
+        })
+      }
+   </script>
+{{/section}}
+
+<h1 style="margin-top: 100px; margin-bottom: 50px; text-align: center">
+   THÊM ĐỘC GIẢ
+</h1>
+<div class="container">
+  <form method="POST" id="frmAddStaff" action="">
+   <div class="row" style="margin-bottom: 20px;">
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               CMND/CCCD
+               </span>
+            </div>
+            <input
+               type="text"
+               id="CMND_CCCD"
+               minlength="9"
+               maxlength="12"
+               name="CMND_CCCD"
+               value=""
+               class="form-control"
+               onkeypress="return isNumberKey(event)"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Họ Và Tên
+               </span>
+            </div>
+            <input
+               type="text"
+               id="HoTenDG"
+               name="HoTenDG"
+               value=""
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-0">
+            <div class="input-group mb-3">
+               <div class="input-group-prepend">
+                  <label class="input-group-text" for="inputGroupSelect01">Loại Độc Giả</label>
+               </div>
+               <select class="custom-select" id="MaLoaiDG" name="MaLoaiDG">
+                  <option value="LDG1">X</option>
+                  <option value="LDG2">Y</option>
+               </select>
+            </div>
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Địa Chỉ
+               </span>
+            </div>
+            <input
+               type="text"
+               id="DiaChi"
+               name="DiaChi"
+               value=""
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Thư Điện tử
+               </span>
+            </div>
+            <input
+               type="text"
+               id="Email"
+               name="Email"
+               value=""
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Ngày Sinh
+               </span>
+            </div>
+            <input
+               type="text"
+               id="NgaySinh"
+               name="NgaySinh"
+               placeholder="__/__/____"
+               value=""
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-0">
+            <div class="input-group mb-3">
+               <div class="input-group-prepend">
+                  <label class="input-group-text" for="inputGroupSelect01">Ngày Lập</label>
+               </div>
+               <input
+                  readonly
+                  type="text"
+                  id="NgayLapThe"
+                  name="NgayLapThe"
+                  placeholder="__/__/____"
+                  value=""
+                  class="form-control"
+                  aria-label="Sizing example input"
+                  aria-describedby="inputGroup-sizing-sm"
+               />
+            </div>
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Nhân Viên Lập Thẻ
+               </span>
+            </div>
+            <input
+            readonly
+               type="text"
+               id="NVLapThe"
+               name="NVLapThe"
+               value="{{lcAuthUser.HoTenNV}}"
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+       <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Ngày Thẻ Hết Hạn
+               </span>
+            </div>
+            <input
+            readonly
+               type="text"
+               id="NgayHetHan"
+               name="NgayHetHan"
+               value=""
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+    </div>
+      <div class="row" style="margin-bottom: 40px;">
+        <div class="col-sm-6">
+          <a href="/index/manager_readers" class="btn btn-secondary w-100 text-white font-weight-bold mb-3">
+            <i class="fas fa-arrow-left"></i> TRỞ VỀ
+          </a>
+        </div>
+        <div class="col-sm-6">
+            <button type="submit" class="btn btn-primary w-100 mr-2 text-white font-weight-bold"><i class="fa fa-plus"></i> THÊM MỚI</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,150 @@
+{{#section "title"}}
+  Tra cứu sách
+{{/section}}
+{{#section "css"}}
+  <style>
+	td, thead{
+	text-align:center;
+	}
+  </style>
+{{/section}}
+{{#section "js"}}
+  <script>
+    function searchBooks(){
+      const key = $('#search-input').val();
+      $.getJSON(`/index/search_book/post?key=${key}`, function (data) {
+        let str="";
+        let aMaSach = [];
+        if(data != "1001"){
+		   $("#tblsearchs > tbody").empty();
+          for(const value of data){
+            if(aMaSach.includes(value.MaSach) == false){
+            str+= "<tr>"
+            //mã sách
+            str+="<td>";
+            str+=value.MaSach;
+            str+="</td>";
+            //tên sách
+            str+="<td>";
+            str+=value.TenSach;
+            str+="</td>";
+			//tên nhà xuất bản
+            str+="<td>";
+            str+=value.TenNXB;
+            str+="</td>";
+            //Ngày xuất bản
+            str+="<td>";
+            str+=value.NgayXuatBan;
+            str+="</td>";
+            //tác giả
+            str+="<td>";
+            str+=value.TenTacGia;
+            str+="</td>";
+            //the loại
+            str+="<td>";
+            str+=value.TenTheLoai;
+            str+="</td>";
+            //vị trí
+            str+="<td>";
+            str+="Kệ sách số " + value.Ke;
+            str+="</td>";
+            //Số lượng
+            str+="<td>";
+            str+= value.SoLuong;
+            str+="</td>";
+            //Số lượng
+            str+="<td>";
+            str+= value.SoLuongDaMuon;
+            str+="</td>";
+            //Số lượng
+            str+="<td>";
+            str+= value.TenTinhTrang;
+            str+="</td>";
+            str+= "</tr>"
+            }
+            aMaSach.push(value.MaSach);
+          }
+          $('#tblsearchs').append(str);
+          document.getElementById("message").style.visibility = "hidden";
+        }else{
+          document.getElementById("message").style.visibility = "visible";
+		  $("#tblsearchs > tbody").empty();
+        }
+      });
+    }
+  </script>
+{{/section}}
+<div class="container text-center" style="margin-top: 100px;">
+  <h1>
+    TRA CỨU SÁCH
+  </h1>
+  <div class="input-group" style="width: 80%; margin: 50px auto">
+    <input
+      class="form-control py-2 border-right-0 border"
+      type="text"
+      value=""
+      autofocus
+      placeholder="tên sách, tên thể loại, tên tác giả hoặc tên nhà xuất bản"
+      id="search-input"
+    />
+    <span class="input-group-append">
+      <button
+        class="btn btn-outline-secondary border-left-0 border"
+        type="button"
+        onclick="searchBooks()"
+      >
+        <i class="fa fa-search"></i>
+      </button>
+    </span>
+  </div>
+</div>
+<div class="container-fluid mb-5">
+  <div class="table-responsive">
+    <table id="tblsearchs" class="table table-hover w-100">
+      <thead>
+        <tr>
+          <th scope="col">
+            Mã Sách
+          </th>
+          <th scope="col">
+            Tên sách
+          </th>
+		  <th scope="col">
+            Nhà Xuất Bản
+          </th>
+          <th scope="col">
+            Ngày Xuất Bản
+          </th>
+          <th scope="col">
+            Tác Giả
+          </th>
+          <th scope="col">
+            Thể Loại
+          </th>
+          <th scope="col">
+            Vị Trí
+          </th>
+          <th style="text-align: center"; scope="col">
+            Số Lượng
+          </th>
+          <th scope="col">
+            Số Lượng Đã Mượn
+          </th>
+          <th scope="col">
+            Tình Trạng
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        
+      </tbody>
+    </table>
+  </div>
+  <p
+    id="message"
+    class="text-center"
+    style="font-size: 20px; font-weight: bold"
+  >
+    Không tìm thấy dữ liệu
+  </p>
+</div>

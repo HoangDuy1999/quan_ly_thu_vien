@@ -1,0 +1,407 @@
+{{#section "title"}}
+Chỉnh sửa TT sách
+{{/section}}
+
+{{#section 'css'}}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.min.css">
+  <style>
+     .text_bold{
+        font-weight: bold;
+     }
+  </style>
+{{/section}}
+
+{{#section 'js'}}
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-datetimepicker/2.5.20/jquery.datetimepicker.full.min.js"></script>
+   {{!-- Thông báo đẹp --}}
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+   {{!-- khúc này set giá trị mặc định --}}
+   <script>
+      $("#MaSach").val("{{infoBook.MaSach}}");
+      $("#TenSach").val("{{infoBook.TenSach}}");
+      $('#MaTheLoai').val("{{infoBook.MaTheLoai}}");
+      $('#MaNXB').val("{{infoBook.MaNXB}}");
+      $('#TenNhanVien').val("{{infoBook.HoTenNV}}");
+      $('#NgayNhap').val("{{infoBook.NgayNhap}}");
+      $('#TTS').val("{{infoBook.TTS}}");
+        $('#NgayXuatBan').datetimepicker({
+          format: 'd/m/Y',
+            timepicker: false,
+            mask: true,
+        });
+      let ngayxb = "{{infoBook.NgayXuatBan}}".trim();
+      ngayxb = ngayxb.replaceAll("-", "/");
+      $('#NgayXuatBan').val(ngayxb);
+      x = parseInt("{{infoBook.GiaTien}}");
+      x =  x.toLocaleString('it-IT', {style : 'currency', currency : 'VND'});
+      x = x.replaceAll(".", ",");
+      $('#GiaTien').val(x);
+      let sl = parseInt("{{infoBook.SoLuong}}");
+      sl= sl.toLocaleString();
+      sl = sl.replaceAll(".", ",");
+      $('#SoLuong').val(sl);
+   </script>
+   <script>
+        Number.prototype.padLeft = function(base,chr){
+         var  len = (String(base || 10).length - String(this).length)+1;
+         return len > 0? new Array(len).join(chr || '0')+this : this;
+      }
+      function formatDate(d){
+         dformat = [(d.getMonth()+1).padLeft(),
+               d.getDate().padLeft(),
+               d.getFullYear()].join('/') +' ' +
+              [d.getHours().padLeft(),
+               d.getMinutes().padLeft(),
+               d.getSeconds().padLeft()].join(':');
+         var arr = dformat.split('/');
+         dformat = arr[1] +"/"+ arr[0]+"/" + arr[2];
+         return dformat;
+      }
+   </script>
+   {{!-- xử lý sự kiện post --}}
+   <script>
+      function isNumberKey(e) {
+        var charCode = (e.which) ? e.which : e.keyCode;
+        if (charCode > 31 && (charCode < 48 || charCode > 57))
+            return false;
+        return true;
+      }
+      function DinhDangSoLuong(){
+         let sl = parseInt($('#SoLuong').val());
+         sl= sl.toLocaleString();
+         sl = sl.replaceAll(".", ",");
+         $('#SoLuong').val(sl);
+      }
+      function isNumberKey(e) {
+        var charCode = (e.which) ? e.which : e.keyCode;
+        if (charCode > 31 && (charCode < 48 || charCode > 57))
+            return false;
+        return true;
+      }
+      function formatCurrency(){
+         x = parseInt($("#GiaTien").val());
+         x =  x.toLocaleString('it-IT', {style : 'currency', currency : 'VND'});
+         x = x.replaceAll(".", ",");
+         $("#GiaTien").val(x);
+      }
+      $('#frmEditBook').on('submit', function (e) {
+        e.preventDefault();
+        validate();
+      })
+      function validate(){
+        const MaSach = $('#MaSach').val();
+        const TenSach = $('#TenSach').val();
+        const MaTheLoai = $('#MaTheLoai').val();
+        const NgayNhap = $('#NgayNhap').val();
+        let today = NgayNhap.trim().split(" ");
+        today = today[0];
+        const NgayXuatBan = $('#NgayXuatBan').val();
+        const MaNXB = $('#MaNXB').val();
+         const MaTacGia = $('#MaTacGia').val();
+        const TTS = $('#TTS').val();
+        const SoLuong = $('#SoLuong').val();
+        const GiaTien = $('#GiaTien').val();
+        var vnf_regex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/g;
+        var date_regex = /^([0-2][0-9]|(3)[0-1])(\/)(((0)[0-9])|((1)[0-2]))(\/)\d{4}$/i;
+        const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
+        if(TenSach == ""){
+            Swal.fire({
+               title: 'Tên sách không được rỗng.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+         }
+          if (!(date_regex.test(NgayXuatBan.trim()))) {
+            Swal.fire({
+               title: 'Ngày xuất bản không đúng định dạng',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+        }
+         const day1 = today.split("/");
+        const day2 = NgayXuatBan.split("/");
+        const firstDate = new Date(day1[2], day1[1], day1[0]);
+         const secondDate = new Date(day2[2], day2[1], day2[0]);
+         const diffDays = Math.round(Math.abs((firstDate - secondDate) / oneDay));
+       if (diffDays > 365 * 8) {
+            Swal.fire({
+               title: 'Ngày xuất bản so với ngày hiện tại lớn hơn 8 năm',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+        }
+        if(NgayNhap == ""){
+            Swal.fire({
+               title: 'Ngày nhập không được rỗng.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+        }
+         if(SoLuong == ""){
+            Swal.fire({
+               title: 'Số lượng không được rỗng',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+         }
+         if(GiaTien == ""){
+            Swal.fire({
+               title: 'Giá tiền không được rỗng.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+         }
+        $.getJSON(`/index/stocker/manager_book/edit/post?MaSach=${MaSach}&TenSach=${TenSach}&NgayXuatBan=${NgayXuatBan}&MaNXB=${MaNXB}&SoLuong=${SoLuong}&GiaTien=${GiaTien}&MaTheLoai=${MaTheLoai}&TTS=${TTS}&MaTacGia=${MaTacGia}`, function (data) {
+          if (data){
+            Swal.fire({
+            title: 'Cập nhật thông tin sách thành công',
+            icon: 'success',
+            iconHtml: '',
+            confirmButtonText: 'Trở về',
+            showCloseButton: true
+            });
+            return false;
+          }else{
+            Swal.fire({
+               title: 'Cập nhật thông tin sách thất bại.',
+               icon: 'error',
+               iconHtml: '',
+               confirmButtonText: 'Trở về',
+               showCloseButton: true
+            });
+            return false;
+         }
+        })
+      }
+   </script>
+{{/section}}
+
+<h1 style="margin-top: 100px; margin-bottom: 50px; text-align: center">
+  CHỈNH SỬA THÔNG TIN SÁCH
+</h1>
+<div class="container">
+  <form method="POST" id="frmEditBook" action="">
+   <div class="row" style="margin-bottom: 20px;">
+     <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+                  Mã Sách
+               </span>
+            </div>
+            <input
+              readonly
+               type="text"
+               id="MaSach"
+               name="MaSach"
+               value=""
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Tên Sách
+               </span>
+            </div>
+            <input
+               type="text"
+               id="TenSach"
+               name="TenSach"
+               value=""
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-0">
+            <div class="input-group mb-3">
+               <div class="input-group-prepend">
+                  <label class="input-group-text" for="inputGroupSelect01">Thể Loại</label>
+               </div>
+               <select class="custom-select" id="MaTheLoai" name="MaTheLoai">
+                  {{#each this.Types}}
+                     <option value="{{MaTheLoai}}">{{TenTheLoai}}</option>
+                  {{/each}}
+               </select>
+            </div>
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Ngày Nhập
+               </span>
+            </div>
+            <input
+               type="text"
+               readonly
+               id="NgayNhap"
+               name="NgayNhap"
+               value=""
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Nhân Viên Tiếp Nhận
+               </span>
+            </div>
+            <input
+               type="text"
+               readonly
+               id="TenNhanVien"
+               name="TenNhanVien"
+               value=""
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Ngày Xuất Bản
+               </span>
+            </div>
+            <input
+               type="text"
+               id="NgayXuatBan"
+               name="NgayXuatBan"
+               value="{{infoBook.NgayXuatBan}}"
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-0">
+            <div class="input-group mb-3">
+               <div class="input-group-prepend">
+                  <label class="input-group-text" for="inputGroupSelect01">Tác Giả</label>
+               </div>
+               <select class="custom-select" id="MaTacGia" name="MaBangCap">
+                 {{#each this.Authors}}
+                  <option value="{{MaTacGia}}">{{TenTacGia}}</option>
+                {{/each}}
+               </select>
+            </div>
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-0">
+            <div class="input-group mb-3">
+               <div class="input-group-prepend">
+                  <label class="input-group-text" for="inputGroupSelect01">Nhà Xuất Bản</label>
+               </div>
+               <select class="custom-select" id="MaNXB" name="MaNXB">
+                 {{#each this.Publishers}}
+                  <option value="{{MaNXB}}">{{TenNXB}}</option>
+                {{/each}}
+               </select>
+            </div>
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Số Lượng
+               </span>
+            </div>
+            <input
+               type="text"
+               onkeypress="return isNumberKey(event)"
+               id="SoLuong"
+               onchange="DinhDangSoLuong()"
+               style="font-weight:bold; color: red"
+               name="SoLuong"
+               value=""
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-3">
+            <div class="input-group-prepend">
+               <span class="input-group-text" id="inputGroup-sizing-sm">
+               Giá Tiền(1 cuốn)
+               </span>
+            </div>
+            <input
+               type="text"
+               id="GiaTien"
+               name="GiaTien"
+               style="font-weight:bold;color:red"
+               onchange="formatCurrency()"
+               value=""
+               onkeypress="return isNumberKey(event)"
+               class="form-control"
+               aria-label="Sizing example input"
+               aria-describedby="inputGroup-sizing-sm"
+               />
+         </div>
+      </div>
+      <div class="col-sm-6">
+         <div class="input-group input-group-ml mb-0">
+            <div class="input-group mb-3">
+               <div class="input-group-prepend">
+                  <label class="input-group-text" for="inputGroupSelect01">Tình Trạng</label>
+               </div>
+               <select class="custom-select" id="TTS" name="TTS">
+                  {{#each this.StatusBooks}}
+                     <option value="{{MaTTSach}}">{{TenTinhTrang}}</option>
+                  {{/each}}
+               </select>
+            </div>
+         </div>
+      </div>
+    </div>
+      <div class="row" style="margin-bottom: 40px;">
+        <div class="col-sm-6">
+          <a href="/index/stocker/manager_book" class="btn btn-secondary w-100 text-white font-weight-bold mb-3">
+            <i class="fas fa-arrow-left"></i> TRỞ VỀ
+          </a>
+        </div>
+        <div class="col-sm-6">
+            <button type="submit" class="btn btn-primary w-100 mr-2 text-white font-weight-bold"><i class="fa fa-plus"></i> CẬP NHẬT</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
