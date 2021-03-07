@@ -1,7 +1,6 @@
 const express = require("express");
 const moment = require("moment");
 const bcrypt = require("bcrypt");
-const restrict = require("../middlewares/auth.mdw");
 const nhanvienModel = require("../models/nhanvienModel");
 const sachModel = require("../models/sachModel");
 const theloaisachModel = require("../models/theloaisachModel");
@@ -11,7 +10,12 @@ const saltRounds = 12;
 const _ = require("lodash");
 //const config = require('../config/config.json');
 const router = express.Router();
-
+function restrict(req, res) {
+  if (req.session.isAuthenticated) {
+    return res.redirect(`/index`);
+  }
+  return true;
+}
 router.get("/index", (req, res) => {
   res.render("home", { title: true });
 });
@@ -60,13 +64,15 @@ router.get("/index/search_book/post", async (req, res) => {
 });
 //KHÚC NÀY CỦA PHẦN LOGIN
 router.get("/login", (req, res) => {
-  if (typeof req.cookies["Sdt"] !== "undefined") {
-    res.render("login", {
-      Sdt: req.cookies["Sdt"],
-      MatKhau: req.cookies["MatKhau"],
-    });
-  } else {
-    res.render("login");
+  if (restrict(req, res)) {
+    if (typeof req.cookies["Sdt"] !== "undefined") {
+      res.render("login", {
+        Sdt: req.cookies["Sdt"],
+        MatKhau: req.cookies["MatKhau"],
+      });
+    } else {
+      res.render("login");
+    }
   }
 });
 
