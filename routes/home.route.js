@@ -7,10 +7,11 @@ const theloaisachModel = require("../models/theloaisachModel");
 const tacgiaModel = require("../models/tacgiaModel");
 const nhaxuatbanModel = require("../models/nhaxuatbanModel");
 const saltRounds = 12;
+const restrict = require("../middlewares/auth.mdw");
 const _ = require("lodash");
 //const config = require('../config/config.json');
 const router = express.Router();
-function restrict(req, res) {
+function restrict_login(req, res) {
   if (req.session.isAuthenticated) {
     return res.redirect(`/index`);
   }
@@ -64,7 +65,7 @@ router.get("/index/search_book/post", async (req, res) => {
 });
 //KHÚC NÀY CỦA PHẦN LOGIN
 router.get("/login", (req, res) => {
-  if (restrict(req, res)) {
+  if (restrict_login(req, res)) {
     if (typeof req.cookies["Sdt"] !== "undefined") {
       res.render("login", {
         Sdt: req.cookies["Sdt"],
