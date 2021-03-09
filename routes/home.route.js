@@ -51,7 +51,14 @@ router.get("/index/search_book/post", async (req, res) => {
       key = key + " " + value.MaNXB;
     }
   }
+  // result = await nhaxuatbanModel.searchLike(req.query.key);
+  // if (result.length > 0) {
+  //   for (const value of result) {
+  //     key = key + " " + value.MaNXB;
+  //   }
+  // }
   let arrBook = [];
+  console.log(key);
   const Atblbook = await sachModel.searchBook(key);
   if (Atblbook.length < 1) {
     return res.json("1001");

@@ -24,7 +24,7 @@ module.exports = {
       SELECT DISTINCT s.MaSach, s.TenSach, s.NgayXuatBan, s.SoLuong, s.SoLuongDaMuon, s.Ke, tg.TenTacGia, tls.TenTheLoai, nxb.TenNXB, tts.TenTinhTrang
       FROM  sach s, tacgia tg, nhaxuatban nxb, theloaisach tls, tinhtrangsach tts
       WHERE s.MaTacGia = tg.MaTacGia AND s.MaTheLoai = tls.MaTheLoai AND s.MaNXB = nxb.MaNXB AND s.TTS = tts.MaTTSach
-      AND MATCH(s.TenSach, s.MaTheLoai, s.MaTacGia, s.MaNXB) AGAINST('${key}')
+      AND MATCH(s.TenSach, s.MaTheLoai, s.MaTacGia, s.MaNXB) AGAINST('${key}' IN BOOLEAN MODE)
     `);
   },
   getLastRow: function () {

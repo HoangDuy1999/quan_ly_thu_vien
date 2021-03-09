@@ -5,7 +5,7 @@ module.exports = {
   searchAuthors: function (key) {
     return db.load(`
     SELECT * FROM  ${tblTacGia}
-    WHERE MATCH(TenTacGia) AGAINST('${key}')
+    WHERE MATCH(TenTacGia) AGAINST('${key} IN BOOLEAN MODE')
     `);
   },
   getList: function () {

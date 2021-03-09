@@ -5,8 +5,14 @@ module.exports = {
   searchPublishingCompany: function (key) {
     return db.load(`
     SELECT * FROM  ${tblNhaXuatBan}
-    WHERE MATCH(TenNXB) AGAINST('${key}')
+    WHERE MATCH(TenNXB) AGAINST('${key}' IN BOOLEAN MODE)
     `);
+  },
+  searchLike: function () {
+    console.log(`
+    SELECT * FROM  ${tblNhaXuatBan} where TenNXB like "%${key}%"`);
+    return db.load(`
+    SELECT * FROM  ${tblNhaXuatBan} where TenNXB like N'%${key}%'`);
   },
   getList: function () {
     return db.load(`

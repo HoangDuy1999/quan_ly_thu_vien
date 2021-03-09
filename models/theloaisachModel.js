@@ -5,7 +5,7 @@ module.exports = {
   searchTypeBook: function (key) {
     return db.load(`
     SELECT * FROM  ${tblTheLoaiSach}
-    WHERE MATCH(TenTheLoai) AGAINST('${key}')
+    WHERE MATCH(TenTheLoai) AGAINST('${key}' IN BOOLEAN MODE)
     `);
   },
   getList: function () {
