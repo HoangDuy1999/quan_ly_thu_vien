@@ -105,13 +105,19 @@ router.get("/forfeit", restrict, async (req, res) => {
     );
     let i = 0;
     let total = 0;
+    let j = 0;
     for (const val of ListReaderForeit) {
-      val.STT = i++;
-      total += val.TienNo;
-      val.TienNo = parseInt(val.TienNo).toLocaleString("it-IT", {
-        style: "currency",
-        currency: "VND",
-      });
+      if (val.TienNo > 0) {
+        val.STT = i++;
+        total += val.TienNo;
+        val.TienNo = parseInt(val.TienNo).toLocaleString("it-IT", {
+          style: "currency",
+          currency: "VND",
+        });
+      } else {
+        delete ListReaderForeit[j];
+      }
+      j++;
     }
     total = parseInt(total).toLocaleString("it-IT", {
       style: "currency",

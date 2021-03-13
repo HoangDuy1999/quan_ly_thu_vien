@@ -20,7 +20,7 @@ module.exports = {
     return db.load(`
       SELECT pms.NgayMuon, pts.SoNgayTraTre, s.TenSach
       FROM phieutrasach pts, ct_phieutra ctpt, phieumuonsach pms, sach s
-      WHERE pts.MaPM = pms.MaPM and pts.MaPT = ctpt.MaPT and ctpt.MaSach = s.MaSach
+      WHERE pts.MaPM = pms.MaPM and pts.MaPT = ctpt.MaPT and ctpt.MaSach = s.MaSach and  pts.SoNgayTraTre > 0
       and pts.NgayTra BETWEEN '${NgayBatDau}' AND '${NgayKetThuc}' and pts.DaXoa = 0
     `);
   },
