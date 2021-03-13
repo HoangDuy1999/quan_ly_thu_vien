@@ -21,7 +21,6 @@ module.exports = {
     `);
   },
   addDetailLiquidation: function (entity) {
-    console.log(entity);
     return db.insert(tblct_thanhlysach, entity);
   },
   deletedDetailLiquidation: function (condition) {
@@ -31,7 +30,7 @@ module.exports = {
     return db.load(`
     SELECT ms.MaPT, ms.MaSach, S.TenSach
     FROM matsach ms, sach s
-    WHERE ms.MaSach = s.MaSach AND ms.DaThanhLy = 0
+    WHERE ms.MaSach = s.MaSach AND ms.DaThanhLy = 0 AND ms.DaXoa = 0
     `);
   },
 };
